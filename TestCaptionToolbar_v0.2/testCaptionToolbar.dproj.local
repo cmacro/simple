@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2014/09/02 09:26:40.000.021,=D:\MyDocs\RAD Studio\Projects\Unit11.pas</Transaction>
+    <Transaction>2014/09/02 09:46:39.000.393,=D:\MyDocs\RAD Studio\Projects\Unit11.pas</Transaction>
+    <Transaction>2014/09/02 09:48:56.000.410,D:\MyDocs\RAD Studio\Projects\Unit11.dfm=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\ufrmCaptionToolbar.dfm</Transaction>
+    <Transaction>2014/09/02 09:48:56.000.410,D:\MyDocs\RAD Studio\Projects\Unit11.pas=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\ufrmCaptionToolbar.pas</Transaction>
+    <Transaction>2014/09/02 09:49:02.000.444,D:\MyDocs\RAD Studio\Projects\Project14.dproj=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\testCaptionToolbar.dproj</Transaction>
+    <Transaction>2014/09/04 14:47:01.000.972,=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\Unit2.pas</Transaction>
+    <Transaction>2014/09/04 14:47:49.000.639,D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\Unit2.dfm=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\ufrmDispatchWnd.dfm</Transaction>
+    <Transaction>2014/09/04 14:47:49.000.639,D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\Unit2.pas=D:\MyDocs\DevSoft\Terminator\UnitTest\UI\TestCaptionToolbar\ufrmDispatchWnd.pas</Transaction>
+  </Transactions>
+</BorlandProject>
