@@ -3,9 +3,12 @@ unit ufrmCaptionToolbar;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Types, Controls, Forms, Dialogs, StdCtrls,
+  Messages, SysUtils, Variants, Types, Controls, Forms, Dialogs, StdCtrls,
   ExtCtrls,
-  pngimage;
+  ComCtrls,
+  Windows,  // 这个单元放在 ComCtrls 的后面，HITTEST 的定义重名。大小写不敏感真的很不方便
+  Classes, Graphics,
+  pngimage, Actions, ActnList, ToolWin, Vcl.ImgList, Vcl.Buttons;
 
 type
   TFormButtonKind = (fbkMin, fbkMax, fbkRestore, fbkClose, fbkHelp);
@@ -20,7 +23,6 @@ type
     FChangeSizeCalled: Boolean;
     FControl: TWinControl;
     FHandled: Boolean;
-    FNeedsUpdate: Boolean; //
 
     FRegion: HRGN;
     FLeft: integer;
@@ -33,30 +35,35 @@ type
     FIconHandle: HICON;
 
     //
-    FPressedButton: Integer;
+    FPressedHit: Integer;     // 实际按下的位置, (只处理关心的位置，其他有交由系统处理)
+    FHotHit: integer;         // 记录上次的测试位置 (只处理关心的位置，其他有交由系统处理)
 
     // skin
+    //  这个内容应独立出来，作为单独一份配置应用于所有窗体。
     FSkinData: TBitmap;
     procedure DrawButton(DC: HDC; AKind: TFormButtonKind; AState: TSkinIndicator; const R: TRect);
 
     function GetHandle: HWND; inline;
     function GetForm: TCustomForm; inline;
-    function GetFrameSize: TRect; inline;
+    function GetFrameSize: TRect;
     function GetCaptionRect(AMaxed: Boolean): TRect; inline;
+    function GetCaption: string;
     function GetIcon: TIcon;
     function GetIconFast: TIcon;
 
     procedure ChangeSize;
     function  NormalizePoint(P: TPoint): TPoint;
     function  HitTest(P: TPoint):integer;
+    procedure Maximize;
+    procedure Minimize;
 
-    // 第一组
+    // 第一组 实现绘制基础
     procedure WMNCPaint(var message: TWMNCPaint); message WM_NCPAINT;
     procedure WMNCActivate(var message: TMessage); message WM_NCACTIVATE;
     procedure WMNCLButtonDown(var message: TWMNCHitMessage); message WM_NCLBUTTONDOWN;
     procedure WMNCUAHDrawCaption(var message: TMessage); message WM_NCUAHDRAWCAPTION;
 
-    // 第二组
+    // 第二组 控制窗体样式
     procedure WMNCCalcSize(var message: TWMNCCalcSize); message WM_NCCALCSIZE;
     procedure WMWindowPosChanging(var message: TWMWindowPosChanging); message WM_WINDOWPOSCHANGING;
 
@@ -64,13 +71,18 @@ type
     procedure WMEraseBkgnd(var message: TWMEraseBkgnd); message WM_ERASEBKGND;
     procedure WMPaint(var message: TWMPaint); message WM_PAINT;
 
+    // 第四组 控制按钮状态
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
+    procedure WMNCLButtonUp(var Message: TWMNCHitMessage); message WM_NCLBUTTONUP;
+    procedure WMNCMouseMove(var Message: TWMNCMouseMove); message WM_NCMOUSEMOVE;
+
+    procedure WMSetText(var Message: TMessage); message WM_SETTEXT;
 
     procedure WndProc(var message: TMessage);
     procedure CallDefaultProc(var message: TMessage);
 
   protected
-    property Handle: HWND read GetHandle;
+    property  Handle: HWND read GetHandle;
     procedure InvalidateNC;
     procedure PaintNC(DC: HDC);
     procedure PaintBackground(DC: HDC);
@@ -83,6 +95,7 @@ type
     property Handled: Boolean read FHandled write FHandled;
     property Control: TWinControl read FControl;
     property Form: TCustomForm read GetForm;
+
   end;
 
   TForm11 = class(TForm)
@@ -92,6 +105,18 @@ type
     Edit2: TEdit;
     Edit3: TEdit;
     Edit4: TEdit;
+    ToolBar1: TToolBar;
+    ToolButton1: TToolButton;
+    ToolButton2: TToolButton;
+    ToolButton3: TToolButton;
+    ActionList1: TActionList;
+    Action1: TAction;
+    Action2: TAction;
+    Action3: TAction;
+    ImageList1: TImageList;
+    procedure Action1Execute(Sender: TObject);
+    procedure Action2Execute(Sender: TObject);
+    procedure SpeedButton1Click(Sender: TObject);
   private
     FTest: TTest;
   protected
@@ -113,10 +138,13 @@ var
 implementation
 
 const
-  SKINCOLOR_BAKCGROUND = $00BF7B18; // 背景色
-  SKINCOLOR_BTNHOT     = $00F2D5C2; // Hot 激活状态
-  SKINCOLOR_BTNPRESSED = $00E3BDA3; // 按下状态
-  SIZE_SYSBTN: TSize = (cx: 25; cy: 18);
+  SKINCOLOR_BAKCGROUND  = $00BF7B18;  // 背景色
+  SKINCOLOR_BTNHOT      = $00F2D5C2;  // Hot 激活状态
+  SKINCOLOR_BTNPRESSED  = $00E3BDA3;  // 按下状态
+  SIZE_SYSBTN: TSize    = (cx: 29; cy: 18);
+  SIZE_FRAME: TRect     = (Left: 4; Top: 28; Right: 5; Bottom: 5); // 窗体边框的尺寸
+  SPACE_AREA            = 3;          // 功能区域之间间隔
+  SIZE_RESICON          = 16;         // 资源中图标默认尺寸
 
 
 {$R *.dfm}
@@ -201,6 +229,20 @@ begin
   FreeAndNil(FTest);
 end;
 
+procedure TForm11.Action1Execute(Sender: TObject);
+begin
+  Tag := Tag + 1;
+  Caption := format('test %d', [Tag]);
+end;
+
+procedure TForm11.Action2Execute(Sender: TObject);
+begin
+  if Shape1.Shape <> High(TShapeType) then
+    Shape1.Shape := Succ(Shape1.Shape)
+  else
+    Shape1.Shape := low(TShapeType);
+end;
+
 function TForm11.DoHandleMessage(var message: TMessage): Boolean;
 begin
   Result := False;
@@ -209,6 +251,11 @@ begin
     FTest.WndProc(message);
     Result := FTest.Handled;
   end;
+end;
+
+procedure TForm11.SpeedButton1Click(Sender: TObject);
+begin
+  Caption := format('test %d', [1]);
 end;
 
 procedure TForm11.WndProc(var message: TMessage);
@@ -265,21 +312,53 @@ end;
 
 function TTest.HitTest(P: TPoint):integer;
 var
+  bMaxed: Boolean;
+  r: TRect;
+  rCaptionRect: TRect;
   rFrame: TRect;
 begin
   Result := HTNOWHERE;
 
+  ///
+  /// 检测位置
+  ///
   rFrame := GetFrameSize;
   if p.Y > rFrame.Top then
     Exit;
 
+  ///
+  ///  只关心窗体按钮区域
+  ///
+  bMaxed := IsZoomed(Handle);
+  rCaptionRect := GetCaptionRect(bMaxed);
+  if PtInRect(rCaptionRect, p) then
+  begin
+    r.Right := rCaptionRect.Right - 1;
+    r.Top := 0;
+    if bMaxed then
+      r.Top := rCaptionRect.Top;
+    r.Top := r.Top + (rFrame.Top - r.Top - SIZE_SYSBTN.cy) div 2;
+    r.Left := r.Right - SIZE_SYSBTN.cx;
+    r.Bottom := r.Top + SIZE_SYSBTN.cy;
 
+    ///
+    /// 实际绘制的按钮就三个，其他没处理
+    ///
+    if (P.Y >= r.Top) and (p.Y <= r.Bottom) and (p.X <= r.Right) then
+    begin
+      if (P.X >= r.Left) then
+        Result := HTCLOSE
+      else if p.X >= (r.Left - SIZE_SYSBTN.cx) then
+        Result := HTMAXBUTTON
+      else if p.X >= (r.Left - SIZE_SYSBTN.cx * 2) then
+        Result := HTMINBUTTON;
+    end;
+  end;
 end;
 
 constructor TTest.Create(AOwner: TWinControl);
 begin
   FControl := AOwner;
-  FNeedsUpdate := True;
   FRegion := 0;
   FChangeSizeCalled := False;
   FCallDefaultProc := False;
@@ -289,6 +368,7 @@ begin
   FIcon := nil;
   FIconHandle := 0;
 
+  // 加载资源
   FSkinData := TBitmap.Create;
   Res.LoadBitmap('MySkin', FSkinData);
 end;
@@ -306,8 +386,6 @@ begin
 end;
 
 procedure TTest.DrawButton(DC: HDC; AKind: TFormButtonKind; AState: TSkinIndicator; const R: TRect);
-const
-  SIZE_ICON = 16;
 var
   hB: HBRUSH;
   iColor: Cardinal;
@@ -327,31 +405,41 @@ begin
   DeleteObject(hB);
 
   /// 绘制图标
-  rSrcOff := Point(SIZE_ICON * ord(AKind), 0);
-  x := R.Left + (R.Right - R.Left - SIZE_ICON) div 2;
-  y := R.Top + (R.Bottom - R.Top - SIZE_ICON) div 2;
-  DrawTransparentBitmap(FSkinData, rSrcOff.X, rSrcOff.Y, DC, x, y, SIZE_ICON, SIZE_ICON);
+  rSrcOff := Point(SIZE_RESICON * ord(AKind), 0);
+  x := R.Left + (R.Right - R.Left - SIZE_RESICON) div 2;
+  y := R.Top + (R.Bottom - R.Top - SIZE_RESICON) div 2;
+  DrawTransparentBitmap(FSkinData, rSrcOff.X, rSrcOff.Y, DC, x, y, SIZE_RESICON, SIZE_RESICON);
 end;
 
 function TTest.GetFrameSize: TRect;
-const
-  SIZE_BORDER = 5;
-  SIZE_CAPTION = 28;
 begin
-  Result := Rect(SIZE_BORDER - 1, SIZE_CAPTION, SIZE_BORDER, SIZE_BORDER);
+  Result := SIZE_FRAME;
 end;
 
 function TTest.GetCaptionRect(AMaxed: Boolean): TRect;
 var
-  rCaption: TRect;
   rFrame: TRect;
 begin
   rFrame := GetFrameSize;
   // 最大化状态简易处理
   if AMaxed then
-    Result := Rect(8, 8, FWidth - 9 , rFrame.Top - 8)
+    Result := Rect(8, 8, FWidth - 9 , rFrame.Top)
   else
-    Result := Rect(rFrame.Left, 3, FWidth - rFrame.right, rFrame.Bottom);
+    Result := Rect(rFrame.Left, 3, FWidth - rFrame.right, rFrame.Top);
+end;
+
+function TTest.GetCaption: string;
+var
+  Buffer: array [0..255] of Char;
+  iLen: integer;
+begin
+  if Handle <> 0 then
+  begin
+    iLen := GetWindowText(Handle, Buffer, Length(Buffer));
+    SetString(Result, Buffer, iLen);
+  end
+  else
+    Result := '';
 end;
 
 function TTest.GetForm: TCustomForm;
@@ -429,24 +517,64 @@ begin
     SendMessage(Handle, WM_NCPAINT, 1, 0);
 end;
 
+procedure TTest.Maximize;
+begin
+  if Handle <> 0 then
+  begin
+    FPressedHit := 0;
+    FHotHit := 0;
+    if IsZoomed(Handle) then
+      SendMessage(Handle, WM_SYSCOMMAND, SC_RESTORE, 0)
+    else
+      SendMessage(Handle, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+  end;
+end;
+
+procedure TTest.Minimize;
+begin
+  if Handle <> 0 then
+  begin
+    FPressedHit := 0;
+    FHotHit := 0;
+    if IsIconic(Handle) then
+      SendMessage(Handle, WM_SYSCOMMAND, SC_RESTORE, 0)
+    else
+      SendMessage(Handle, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+   end;
+end;
+
 procedure TTest.PaintNC(DC: HDC);
+const
+  HITVALUES: array [TFormButtonKind] of integer = (HTMINBUTTON, HTMAXBUTTON, HTMAXBUTTON, HTCLOSE, HTHELP);
+
+  function GetBtnState(AKind: TFormButtonKind): TSkinIndicator;
+  begin
+    if (FPressedHit = FHotHit) and (FPressedHit = HITVALUES[AKind]) then
+      Result := siPressed
+    else if FHotHit = HITVALUES[AKind] then
+      Result := siHover
+    else
+      Result := siInactive;
+  end;
+
 var
   hB: HBRUSH;
-  P: TPoint;
-  R: TRect;
+  rFrame: TRect;
   rButton: TRect;
   SaveIndex: integer;
   bMaxed: Boolean;
-  iOff: Integer;
   rCaptionRect : TRect;
+  sData: string;
+  Flag: Cardinal;
+  SaveColor: cardinal;
 begin
   SaveIndex := SaveDC(DC);
   try
-    bMaxed := GetWindowLong(Handle, GWL_STYLE) and WS_MAXIMIZE = WS_MAXIMIZE;
+    bMaxed := IsZoomed(Handle);
 
     // 扣除客户区域
-    R := GetFrameSize;
-    ExcludeClipRect(DC, R.Left, R.Top, FWidth - R.Right, FHeight - R.Bottom);
+    rFrame := GetFrameSize;
+    ExcludeClipRect(DC, rFrame.Left, rFrame.Top, FWidth - rFrame.Right, FHeight - rFrame.Bottom);
 
     ///
     ///  标题区域
@@ -454,37 +582,46 @@ begin
     rCaptionRect := GetCaptionRect(bMaxed);
 
     // 填充整个窗体背景
-    R := Rect(0, 0, FWidth, FHeight);
     hB := CreateSolidBrush(SKINCOLOR_BAKCGROUND);
-    FillRect(DC, R, hB);
+    FillRect(DC, Rect(0, 0, FWidth, FHeight), hB);
     DeleteObject(hB);
-
-    R := GetFrameSize;
 
     /// 绘制窗体图标
     rButton := BuildRect(rCaptionRect.Left + 2, rCaptionRect.Top, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
-    rButton.Top := rButton.Top + (R.Top - rButton.Bottom) div 2;
+    rButton.Top := rButton.Top + (rFrame.Top - rButton.Bottom) div 2;
     DrawIconEx(DC, rButton.Left, rButton.Top, GetIconFast.Handle, 0, 0, 0, 0, DI_NORMAL);
+
+    rCaptionRect.Left := rButton.Right + 5; // 前部留白
 
     /// 绘制窗体按钮区域
     rButton.Right := rCaptionRect.Right - 1;
     rButton.Top := 0;
     if bMaxed then
       rButton.Top := rCaptionRect.Top;
-    rButton.Top := rButton.Top + (r.Top - rButton.Top - SIZE_SYSBTN.cy) div 2;
+    rButton.Top := rButton.Top + (rFrame.Top - rButton.Top - SIZE_SYSBTN.cy) div 2;
     rButton.Left := rButton.Right - SIZE_SYSBTN.cx;
     rButton.Bottom := rButton.Top + SIZE_SYSBTN.cy;
-    DrawButton(Dc, fbkClose, siInactive, rButton);
+    DrawButton(Dc, fbkClose, GetBtnState(fbkClose), rButton);
 
-    OffsetRect(rButton, -(SIZE_SYSBTN.cx + 1), 0);
+    OffsetRect(rButton, - SIZE_SYSBTN.cx, 0);
     if bMaxed then
-      DrawButton(Dc, fbkRestore, siInactive, rButton)
+      DrawButton(Dc, fbkRestore, GetBtnState(fbkRestore), rButton)
     else
-      DrawButton(Dc, fbkMax, siInactive, rButton);
+      DrawButton(Dc, fbkMax, GetBtnState(fbkMax), rButton);
 
-    OffsetRect(rButton, -(SIZE_SYSBTN.cx + 1), 0);
-    DrawButton(Dc, fbkMin, siInactive, rButton);
+    OffsetRect(rButton, - SIZE_SYSBTN.cx, 0);
+    DrawButton(Dc, fbkMin, GetBtnState(fbkMin), rButton);
 
+    rCaptionRect.Right := rButton.Left - 3; // 后部空出
+
+    /// 绘制Caption
+    sData :=  GetCaption;
+    SetBkMode(DC, TRANSPARENT);
+    SaveColor := SetTextColor(DC, $00FFFFFF);
+
+    Flag := DT_LEFT or DT_VCENTER or DT_SINGLELINE or DT_NOPREFIX;
+    DrawTextEx(DC, PChar(sData), Length(sData), rCaptionRect, Flag, nil);
+    SetTextColor(DC, SaveColor);
   finally
     RestoreDC(DC, SaveIndex);
   end;
@@ -510,8 +647,6 @@ end;
 procedure TTest.WMEraseBkgnd(var message: TWMEraseBkgnd);
 var
   DC: HDC;
-  hB: HBRUSH;
-  R: TRect;
   SaveIndex: integer;
 begin
   DC := Message.DC;
@@ -553,23 +688,26 @@ end;
 
 procedure TTest.WMNCHitTest(var Message: TWMNCHitTest);
 var
-  iHit: Integer;
   P: TPoint;
+  iHit: integer;
 begin
-  TForm11(Control).Edit1.text := IntToStr(Message.XPos);
-  TForm11(Control).Edit2.Text := IntToStr(Message.YPos);
-
+  // 需要把位置转换到实际窗口位置
   P := NormalizePoint(Point(Message.XPos, Message.YPos));
 
-  TForm11(Control).Edit3.text := IntToStr(p.X);
-  TForm11(Control).Edit4.Text := IntToStr(p.Y);
-
+  // 获取 位置
   iHit := HitTest(p);
-  if iHit > HTNOWHERE then
+  if FHotHit > HTNOWHERE then
   begin
-    Message.Result := HitTest(P);
+    Message.Result := iHit;
     Handled := True;
   end;
+
+  if iHit <> FHotHit then
+  begin
+    FHotHit := iHit;
+    InvalidateNC;
+  end;
+
 end;
 
 procedure TTest.WMWindowPosChanging(var message: TWMWindowPosChanging);
@@ -612,18 +750,66 @@ begin
 end;
 
 procedure TTest.WMNCLButtonDown(var message: TWMNCHitMessage);
+var
+  iHit: integer;
 begin
   inherited;
 
+  iHit := HTNOWHERE;
   if (Message.HitTest = HTCLOSE) or (Message.HitTest = HTMAXBUTTON) or (Message.HitTest = HTMINBUTTON) or
     (Message.HitTest = HTHELP) then
   begin
-    FPressedButton := Message.HitTest;
-    InvalidateNC;
+    iHit := Message.HitTest;
+
     Message.Result := 0;
     Message.Msg := WM_NULL;
     Handled := True;
   end;
+
+  if iHit <> FPressedHit then
+  begin
+    FPressedHit := iHit;
+    InvalidateNC;
+  end;
+end;
+
+procedure TTest.WMNCLButtonUp(var Message: TWMNCHitMessage);
+var
+  iWasHit: Integer;
+begin
+  iWasHit := FPressedHit;
+  if iWasHit <> HTNOWHERE then
+  begin
+    FPressedHit := HTNOWHERE;
+    //InvalidateNC;
+
+    if iWasHit = FHotHit then
+    begin
+      case Message.HitTest of
+        HTCLOSE     : SendMessage(Handle, WM_SYSCOMMAND, SC_CLOSE, 0);
+        HTMAXBUTTON : Maximize;
+        HTMINBUTTON : Minimize;
+        HTHELP      : SendMessage(Handle, WM_SYSCOMMAND, SC_CONTEXTHELP, 0);
+      end;
+
+      Message.Result := 0;
+      Message.Msg := WM_NULL;
+      Handled := True;
+    end;
+  end;
+end;
+
+procedure TTest.WMNCMouseMove(var Message: TWMNCMouseMove);
+begin
+  if (FPressedHit <> HTNOWHERE) and (FPressedHit <> Message.HitTest) then
+    FPressedHit := HTNOWHERE;
+end;
+
+procedure TTest.WMSetText(var Message: TMessage);
+begin
+  CallDefaultProc(Message);
+  InvalidateNC;
+  Handled := true;
 end;
 
 procedure TTest.WMNCPaint(var message: TWMNCPaint);
