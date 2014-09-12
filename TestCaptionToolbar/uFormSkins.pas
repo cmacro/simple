@@ -3,14 +3,25 @@ unit uFormSkins;
 interface
 
 uses
-  Classes, windows, Controls, Graphics, Forms, messages, pngimage;
+  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types;
 
 const
   WM_NCUAHDRAWCAPTION = $00AE;
 
+  CKM_ADD             = WM_USER + 1;  // 增加标题区域位置
+
 type
   TFormButtonKind = (fbkMin, fbkMax, fbkRestore, fbkClose, fbkHelp);
   TSkinIndicator = (siInactive, siHover, siPressed, siSelected, siHoverSelected);
+
+  TFormCaptionPlugin = class
+
+  end;
+
+  TcpToolbar = class(TFormCaptionPlugin)
+
+  end;
+
 
   TskForm = class
   private
@@ -29,9 +40,9 @@ type
     FIcon: TIcon;
     FIconHandle: HICON;
 
-    //
-    FPressedHit: Integer;     // 实际按下的位置, (只处理关心的位置，其他有交由系统处理)
-    FHotHit: integer;         // 记录上次的测试位置 (只处理关心的位置，其他有交由系统处理)
+    // 鼠标位置状态，只处理监控的位置，其他有交由系统处理
+    FPressedHit: Integer;     // 实际按下的位置
+    FHotHit: integer;         // 记录上次的测试位置
 
     function GetHandle: HWND; inline;
     function GetForm: TCustomForm; inline;
@@ -88,6 +99,14 @@ type
     property Form: TCustomForm read GetForm;
   end;
 
+
+implementation
+
+{$R MySkin.RES}
+
+type
+  TacWinControl = class(TWinControl);
+
   Res = class
     class procedure LoadGraphic(const AName: string; AGraphic: TGraphic);
     class procedure LoadBitmap(const AName: string; AGraphic: TBitmap);
@@ -105,13 +124,6 @@ type
   end;
 
 
-implementation
-
-{$R MySkin.RES}
-
-type
-  TacWinControl = class(TWinControl);
-
 const
   SKINCOLOR_BAKCGROUND  = $00BF7B18;  // 背景色
   SKINCOLOR_BTNHOT      = $00F2D5C2;  // Hot 激活状态
@@ -120,6 +132,7 @@ const
   SIZE_FRAME: TRect     = (Left: 4; Top: 28; Right: 5; Bottom: 5); // 窗体边框的尺寸
   SPACE_AREA            = 3;          // 功能区域之间间隔
   SIZE_RESICON          = 16;         // 资源中图标默认尺寸
+
 
 
 function BuildRect(L, T, W, H: Integer): TRect; inline;
