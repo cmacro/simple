@@ -3,23 +3,67 @@ unit uFormSkins;
 interface
 
 uses
-  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types;
+  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types, ImgList;
 
 const
   WM_NCUAHDRAWCAPTION = $00AE;
 
   CKM_ADD             = WM_USER + 1;  // 增加标题区域位置
 
+  HTCUSTOM = 100; //HTHELP + 1;              /// 自定义区域ID
+  HTCAPTIONTOOLBAR = HTCUSTOM + 1;    /// 标题工具区域
+
 type
+  TskForm = class;
+
   TFormButtonKind = (fbkMin, fbkMax, fbkRestore, fbkClose, fbkHelp);
   TSkinIndicator = (siInactive, siHover, siPressed, siSelected, siHoverSelected);
 
   TFormCaptionPlugin = class
+  private
+    FBorder: TRect;
+    FOwner: TskForm;
+    FVisible: Boolean;
 
+  protected
+    procedure Paint(DC: HDC); virtual; abstract;
+    function  CalcSize: TRect; virtual; abstract;
+
+    procedure Invalidate;
+    procedure Update;
+  public
+    constructor Create(AOwner: TskForm); virtual;
+
+    property Border: TRect read FBorder;
+    property Visible: Boolean read FVisible;
+  end;
+
+
+  TcpToolButton = record
+    Action: TBasicAction;
+    ImageIndex: Integer;  // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
   end;
 
   TcpToolbar = class(TFormCaptionPlugin)
+  private
+    FItems: array of TcpToolButton;
+    FCount: Integer;
 
+    // 考虑标题栏比较特殊，背景使用的是纯属情况。图标需要做的更符合纯属需求。
+    FImages: TCustomImageList;
+
+  protected
+    // 绘制按钮样式
+    procedure Paint(DC: HDC); override;
+    // 计算实际占用尺寸
+    function  CalcSize: TRect; override;
+
+  public
+    procedure Add(Action: TBasicAction; AImageIndex: Integer = -1);
+    procedure Delete(Index: Integer);
+    function  IndexOf(Action: TBasicAction): Integer;
+
+    property Images: TCustomImageList read FImages write FImages;
   end;
 
 
@@ -43,6 +87,8 @@ type
     // 鼠标位置状态，只处理监控的位置，其他有交由系统处理
     FPressedHit: Integer;     // 实际按下的位置
     FHotHit: integer;         // 记录上次的测试位置
+
+    FToolbar: TcpToolbar;
 
     function GetHandle: HWND; inline;
     function GetForm: TCustomForm; inline;
@@ -94,6 +140,7 @@ type
 
     function DoHandleMessage(var message: TMessage): Boolean;
 
+    property Toolbar: TcpToolbar read FToolbar;
     property Handled: Boolean read FHandled write FHandled;
     property Control: TWinControl read FControl;
     property Form: TCustomForm read GetForm;
@@ -101,6 +148,9 @@ type
 
 
 implementation
+
+const
+  SPALCE_CAPTIONAREA = 3;
 
 {$R MySkin.RES}
 
@@ -112,27 +162,40 @@ type
     class procedure LoadBitmap(const AName: string; AGraphic: TBitmap);
   end;
 
+  TResArea = record
+    x: Integer;
+    y: Integer;
+    w: Integer;
+    h: Integer;
+  end;
+
+  TSkinToolbarElement = (steSplitter, stePopdown);
+
   SkinData = class
   private
   class var
     FData: TBitmap;
+
   public
     class constructor Create;
     class destructor Destroy;
 
+    class procedure DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect); static;
     class procedure DrawButton(DC: HDC; AKind: TFormButtonKind; AState: TSkinIndicator; const R: TRect); static;
+    class procedure DrawElement(DC: HDC; AItem: TSkinToolbarElement; const R: TRect);
   end;
-
 
 const
   SKINCOLOR_BAKCGROUND  = $00BF7B18;  // 背景色
   SKINCOLOR_BTNHOT      = $00F2D5C2;  // Hot 激活状态
   SKINCOLOR_BTNPRESSED  = $00E3BDA3;  // 按下状态
   SIZE_SYSBTN: TSize    = (cx: 29; cy: 18);
-  SIZE_FRAME: TRect     = (Left: 4; Top: 28; Right: 5; Bottom: 5); // 窗体边框的尺寸
+  SIZE_FRAME: TRect     = (Left: 4; Top: 29; Right: 5; Bottom: 5); // 窗体边框的尺寸
   SPACE_AREA            = 3;          // 功能区域之间间隔
   SIZE_RESICON          = 16;         // 资源中图标默认尺寸
+  SIZE_HEIGHTTOOLBAR    = 16;
 
+  RES_CAPTIONTOOLBAR: TResArea = (x: 0; y: 16; w: 9; h: 16);
 
 
 function BuildRect(L, T, W, H: Integer): TRect; inline;
@@ -247,6 +310,20 @@ begin
       else if p.X >= (r.Left - SIZE_SYSBTN.cx * 2) then
         Result := HTMINBUTTON;
     end;
+
+    ///
+    ///  标题工具区域
+    ///    需要前面扣除窗体图标区域
+    if (Result = HTNOWHERE) and (FToolbar.Visible) then
+    begin
+      r.Left := rCaptionRect.Left + 2 + GetSystemMetrics(SM_CXSMICON) + SPALCE_CAPTIONAREA;
+      R.Top := rCaptionRect.Top + (rCaptionRect.Height - FToolbar.Border.Height) div 2;
+      R.Right := R.Left + FToolbar.Border.Width;
+      R.Bottom := R.Top + FToolbar.Border.Height;
+
+      if PtInRect(r, p) then
+        Result := HTCAPTIONTOOLBAR;
+    end;
   end;
 end;
 
@@ -261,10 +338,14 @@ begin
   FHeight := FControl.Height;
   FIcon := nil;
   FIconHandle := 0;
+
+  FToolbar := TcpToolbar.Create(Self);
 end;
 
 destructor TskForm.Destroy;
 begin
+  FToolbar.Free;
+
   FIconHandle := 0;
   if FIcon <> nil then      FIcon.Free;
   if FRegion <> 0 then      DeleteObject(FRegion);
@@ -429,14 +510,19 @@ const
   end;
 
 var
+  bClipRegion: boolean;
   hB: HBRUSH;
   rFrame: TRect;
   rButton: TRect;
   SaveIndex: integer;
   bMaxed: Boolean;
+  ClipRegion: HRGN;
+  CurrentIdx: Integer;
   rCaptionRect : TRect;
   sData: string;
   Flag: Cardinal;
+  iLeftOff: Integer;
+  iTopOff: Integer;
   SaveColor: cardinal;
 begin
   SaveIndex := SaveDC(DC);
@@ -457,13 +543,14 @@ begin
     FillRect(DC, Rect(0, 0, FWidth, FHeight), hB);
     DeleteObject(hB);
 
+    ///
     /// 绘制窗体图标
     rButton := BuildRect(rCaptionRect.Left + 2, rCaptionRect.Top, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
     rButton.Top := rButton.Top + (rFrame.Top - rButton.Bottom) div 2;
     DrawIconEx(DC, rButton.Left, rButton.Top, GetIconFast.Handle, 0, 0, 0, 0, DI_NORMAL);
+    rCaptionRect.Left := rButton.Right + SPALCE_CAPTIONAREA; //
 
-    rCaptionRect.Left := rButton.Right + 5; // 前部留白
-
+    ///
     /// 绘制窗体按钮区域
     rButton.Right := rCaptionRect.Right - 1;
     rButton.Top := 0;
@@ -482,17 +569,47 @@ begin
 
     OffsetRect(rButton, - SIZE_SYSBTN.cx, 0);
     SkinData.DrawButton(Dc, fbkMin, GetBtnState(fbkMin), rButton);
+    rCaptionRect.Right := rButton.Left - SPALCE_CAPTIONAREA; // 后部空出
 
-    rCaptionRect.Right := rButton.Left - 3; // 后部空出
+    ///
+    /// 绘制工具条
+    if FToolbar.Visible and (rCaptionRect.Right > rCaptionRect.Left) then
+    begin
+      /// 防止出现绘制出多余区域，当区域不够时需要进行剪切。
+      ///  如： 窗体缩小时
+      bClipRegion := rCaptionRect.Width < FToolbar.Border.Width;
+      if bClipRegion then
+      begin
+        ClipRegion := CreateRectRgnIndirect(rCaptionRect);
+        CurrentIdx := SelectClipRgn(DC, ClipRegion);
+        DeleteObject(ClipRegion);
+      end;
 
+      iLeftOff := rCaptionRect.Left;
+      iTopOff := rCaptionRect.Top + (rCaptionRect.Height - FToolbar.Border.Height) div 2;
+      MoveWindowOrg(DC, iLeftOff, iTopOff);
+      FToolbar.Paint(DC);
+      MoveWindowOrg(DC, -iLeftOff, -iTopOff);
+
+      if bClipRegion then
+        SelectClipRgn(DC, CurrentIdx);
+
+      /// 扣除工具条区域
+      rCaptionRect.Left := rCaptionRect.Left + FToolbar.Border.Width + SPALCE_CAPTIONAREA;
+    end;
+
+    ///
     /// 绘制Caption
-    sData :=  GetCaption;
-    SetBkMode(DC, TRANSPARENT);
-    SaveColor := SetTextColor(DC, $00FFFFFF);
+    if rCaptionRect.Right > rCaptionRect.Left then
+    begin
+      sData :=  GetCaption;
+      SetBkMode(DC, TRANSPARENT);
+      SaveColor := SetTextColor(DC, $00FFFFFF);
 
-    Flag := DT_LEFT or DT_VCENTER or DT_SINGLELINE or DT_NOPREFIX;
-    DrawTextEx(DC, PChar(sData), Length(sData), rCaptionRect, Flag, nil);
-    SetTextColor(DC, SaveColor);
+      Flag := DT_LEFT or DT_VCENTER or DT_SINGLELINE or DT_NOPREFIX;
+      DrawTextEx(DC, PChar(sData), Length(sData), rCaptionRect, Flag, nil);
+      SetTextColor(DC, SaveColor);
+    end;
   finally
     RestoreDC(DC, SaveIndex);
   end;
@@ -806,10 +923,24 @@ end;
 class procedure SkinData.DrawButton(DC: HDC; AKind: TFormButtonKind; AState:
     TSkinIndicator; const R: TRect);
 var
-  hB: HBRUSH;
-  iColor: Cardinal;
   rSrcOff: TPoint;
   x, y: integer;
+begin
+  /// 绘制背景
+  DrawButtonBackground(DC, AState, R);
+
+  /// 绘制图标
+  rSrcOff := Point(SIZE_RESICON * ord(AKind), 0);
+  x := R.Left + (R.Right - R.Left - SIZE_RESICON) div 2;
+  y := R.Top + (R.Bottom - R.Top - SIZE_RESICON) div 2;
+  DrawTransparentBitmap(FData, rSrcOff.X, rSrcOff.Y, DC, x, y, SIZE_RESICON, SIZE_RESICON);
+end;
+
+
+class procedure SkinData.DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect);
+var
+  hB: HBRUSH;
+  iColor: Cardinal;
 begin
   /// 绘制背景
   case AState of
@@ -822,13 +953,115 @@ begin
   hB := CreateSolidBrush(iColor);
   FillRect(DC, R, hB);
   DeleteObject(hB);
-
-  /// 绘制图标
-  rSrcOff := Point(SIZE_RESICON * ord(AKind), 0);
-  x := R.Left + (R.Right - R.Left - SIZE_RESICON) div 2;
-  y := R.Top + (R.Bottom - R.Top - SIZE_RESICON) div 2;
-  DrawTransparentBitmap(FData, rSrcOff.X, rSrcOff.Y, DC, x, y, SIZE_RESICON, SIZE_RESICON);
 end;
 
+class procedure SkinData.DrawElement(DC: HDC; AItem: TSkinToolbarElement; const R: TRect);
+var
+  rSrc: TResArea;
+  x, y: integer;
+begin
+  rSrc := RES_CAPTIONTOOLBAR;
+  rSrc.x :=  rSrc.x + rSrc.w * (ord(AItem) - ord(Low(TSkinToolbarElement)));
+
+  /// 绘制图标
+  x := R.Left + (R.Right - R.Left - rSrc.w) div 2;
+  y := R.Top + (R.Bottom - R.Top - rSrc.h) div 2;
+  DrawTransparentBitmap(FData, rSrc.x, rSrc.y, DC, x, y, rSrc.w, rSrc.h);
+end;
+
+{ TcpToolbar }
+
+procedure TcpToolbar.Add(Action: TBasicAction; AImageIndex: Integer);
+begin
+  if FCount >= Length(FItems) then
+    SetLength(FItems, FCount + 5);
+
+  ZeroMemory(@FItems[FCount], SizeOf(TcpToolButton));
+  FItems[FCount].Action := Action;
+  FItems[FCount].ImageIndex := AImageIndex;
+
+  inc(FCount);
+
+  Update;
+end;
+
+function TcpToolbar.CalcSize: TRect;
+const
+  SIZE_SPLITER = 10;
+  SIZE_BUTTON = 16;
+  SIZE_POPMENU = 10;
+var
+  w, h: Integer;
+begin
+  ///
+  ///  占用宽度
+  ///     如果考虑比较复杂的按钮样式和显示标题等功能，那么需要计算每个按钮实际占用宽度才能获得。
+  w := SIZE_SPLITER * 2 + SIZE_POPMENU + SIZE_BUTTON * FCount;
+  h := SIZE_BUTTON;
+  Result := Rect(0, 0, w, h);
+end;
+
+procedure TcpToolbar.Delete(Index: Integer);
+begin
+  if (Index >= 0) and (Index < FCount) then
+  begin
+    if Index < (FCount - 1) then
+      Move(FItems[Index+1], FItems[Index], sizeof(TcpToolButton) * (FCount - Index - 1));
+    dec(FCount);
+
+    Update;
+  end;
+end;
+
+function TcpToolbar.IndexOf(Action: TBasicAction): Integer;
+var
+  I: Integer;
+begin
+  Result := -1;
+  for I := 0 to FCount - 1 do
+    if FItems[i].Action = Action then
+    begin
+      Result := i;
+      Break;
+    end;
+end;
+
+procedure TcpToolbar.Paint(DC: HDC);
+var
+  r: TRect;
+begin
+  //SkinData.DrawButtonBackground(DC, siHover, Border);
+
+  /// 分割线
+  r := Border;
+  r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
+  SkinData.DrawElement(DC, steSplitter, r);
+
+  OffsetRect(r, r.Right - r.Left, 0);
+  r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
+  SkinData.DrawElement(DC, stePopdown, r);
+
+  OffsetRect(r, r.Right - r.Left, 0);
+  r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
+  SkinData.DrawElement(DC, steSplitter, r);
+end;
+
+constructor TFormCaptionPlugin.Create(AOwner: TskForm);
+begin
+  FOwner := AOwner;
+  FVisible := True;
+  FBorder := CalcSize;
+end;
+
+procedure TFormCaptionPlugin.Invalidate;
+begin
+  FOwner.InvalidateNC;
+end;
+
+procedure TFormCaptionPlugin.Update;
+begin
+  FBorder := CalcSize;
+  Invalidate;
+end;
 
 end.

@@ -2,7 +2,7 @@ object Form11: TForm11
   Left = 0
   Top = 0
   Caption = 'Form11'
-  ClientHeight = 314
+  ClientHeight = 508
   ClientWidth = 418
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -2607,13 +2607,20 @@ object Form11: TForm11
     Width = 105
     Height = 41
   end
+  object PaintBox1: TPaintBox
+    Left = 24
+    Top = 168
+    Width = 161
+    Height = 273
+  end
   object Button1: TButton
-    Left = 160
-    Top = 96
+    Left = 240
+    Top = 232
     Width = 75
     Height = 25
     Caption = 'Button1'
     TabOrder = 0
+    OnClick = Button1Click
   end
   object Edit1: TEdit
     Left = 264
@@ -2697,7 +2704,7 @@ object Form11: TForm11
     Left = 136
     Top = 48
     Bitmap = {
-      494C010103000800340010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010103000800440010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
