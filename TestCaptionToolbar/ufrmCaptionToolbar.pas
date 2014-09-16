@@ -26,14 +26,16 @@ type
     Action2: TAction;
     Action3: TAction;
     ImageList1: TImageList;
-    PaintBox1: TPaintBox;
+    ImageList2: TImageList;
+    procedure FormCreate(Sender: TObject);
     procedure Action1Execute(Sender: TObject);
     procedure Action2Execute(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
+    procedure Action3Execute(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
   private
     FTest: TskForm;
   protected
+
     procedure WndProc(var message: TMessage); override;
   public
     constructor Create(AOwner: TComponent); override;
@@ -58,6 +60,14 @@ begin
   inherited;
 end;
 
+procedure TForm11.FormCreate(Sender: TObject);
+begin
+  FTest.Toolbar.Images := ImageList2;
+  FTest.Toolbar.Add(Action1, 0);
+  FTest.Toolbar.Add(Action2, 1);
+  FTest.Toolbar.Add(Action3, 2);
+end;
+
 destructor TForm11.Destroy;
 begin
   inherited;
@@ -78,15 +88,9 @@ begin
     Shape1.Shape := low(TShapeType);
 end;
 
-procedure TForm11.Button1Click(Sender: TObject);
+procedure TForm11.Action3Execute(Sender: TObject);
 begin
-//  SkinData.DrawElement(PaintBox1.Canvas.Handle, steSplitter, Rect(10, 10, 30, 30));
-//  SkinData.DrawElement(PaintBox1.Canvas.Handle, steSplitter, Rect(10, 40, 30, 80));
-//
-//  SkinData.DrawButton(PaintBox1.Canvas.Handle, fbkMin, siHover,Rect(10, 100, 30, 130) );
-
-  //PaintBox1.Canvas.Draw(0, 0, SkinData.FData);
-  //SkinData.FData.Canvas.Draw(0, 0, PaintBox1);
+  Action1.Enabled := not Action1.Enabled;
 end;
 
 procedure TForm11.SpeedButton1Click(Sender: TObject);

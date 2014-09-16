@@ -3,7 +3,7 @@ unit uFormSkins;
 interface
 
 uses
-  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types, ImgList;
+  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types, ImgList, ActnList;
 
 const
   WM_NCUAHDRAWCAPTION = $00AE;
@@ -21,6 +21,7 @@ type
 
   TFormCaptionPlugin = class
   private
+    FOffset: TPoint;  // 实际标题区域所在的偏移位置
     FBorder: TRect;
     FOwner: TskForm;
     FVisible: Boolean;
@@ -28,6 +29,15 @@ type
   protected
     procedure Paint(DC: HDC); virtual; abstract;
     function  CalcSize: TRect; virtual; abstract;
+    function  ScreenToClient(x, y: Integer): TPoint;
+
+    function  HandleMessage(var Message: TMessage): Boolean; virtual;
+
+    procedure HitWindowTest(P: TPoint); virtual;
+    procedure MouseMove(p: TPoint); virtual;
+    procedure MouseDown(Button: TMouseButton; p: TPoint); virtual;
+    procedure MouseUp(Button: TMouseButton; p: TPoint); virtual;
+    procedure MouseLeave; virtual;
 
     procedure Invalidate;
     procedure Update;
@@ -41,24 +51,40 @@ type
 
   TcpToolButton = record
     Action: TBasicAction;
-    ImageIndex: Integer;  // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
+    ImageIndex: Integer;    // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
+    Width: Word;            // 实际占用宽度，考虑后续加不同的按钮样式使用
+    Fade: Word              // 褪色量 0 - 255
   end;
 
   TcpToolbar = class(TFormCaptionPlugin)
   private
     FItems: array of TcpToolButton;
     FCount: Integer;
+    FHotIndex: Integer;
 
     // 考虑标题栏比较特殊，背景使用的是纯属情况。图标需要做的更符合纯属需求。
     FImages: TCustomImageList;
+    FPressedIndex: Integer;
 
+    procedure ExecAction(Index: Integer);
+    procedure PopConfigMenu;
+    function  HitTest(P: TPoint): integer;
+    function  LoadActionIcon(Idx: Integer; AImg: TBitmap):Boolean;
   protected
     // 绘制按钮样式
     procedure Paint(DC: HDC); override;
     // 计算实际占用尺寸
     function  CalcSize: TRect; override;
 
+    procedure HitWindowTest(P: TPoint); override;
+    procedure MouseMove(p: TPoint); override;
+    procedure MouseDown(Button: TMouseButton; p: TPoint); override;
+    procedure MouseUp(Button: TMouseButton; p: TPoint); override;
+    procedure MouseLeave; override;
+
   public
+    constructor Create(AOwner: TskForm); override;
+
     procedure Add(Action: TBasicAction; AImageIndex: Integer = -1);
     procedure Delete(Index: Integer);
     function  IndexOf(Action: TBasicAction): Integer;
@@ -107,7 +133,7 @@ type
     // 第一组 实现绘制基础
     procedure WMNCPaint(var message: TWMNCPaint); message WM_NCPAINT;
     procedure WMNCActivate(var message: TMessage); message WM_NCACTIVATE;
-    procedure WMNCLButtonDown(var message: TWMNCHitMessage); message WM_NCLBUTTONDOWN;
+    procedure WMNCLButtonDown(var message: TWMNCLButtonDown); message WM_NCLBUTTONDOWN;
     procedure WMNCUAHDrawCaption(var message: TMessage); message WM_NCUAHDRAWCAPTION;
 
     // 第二组 控制窗体样式
@@ -120,7 +146,7 @@ type
 
     // 第四组 控制按钮状态
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
-    procedure WMNCLButtonUp(var Message: TWMNCHitMessage); message WM_NCLBUTTONUP;
+    procedure WMNCLButtonUp(var Message: TWMNCLButtonUp); message WM_NCLBUTTONUP;
     procedure WMNCMouseMove(var Message: TWMNCMouseMove); message WM_NCMOUSEMOVE;
     procedure WMSetText(var Message: TMessage); message WM_SETTEXT;
 
@@ -180,9 +206,10 @@ type
     class constructor Create;
     class destructor Destroy;
 
-    class procedure DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect); static;
+    class procedure DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect; const Opacity: Byte = 255); static;
     class procedure DrawButton(DC: HDC; AKind: TFormButtonKind; AState: TSkinIndicator; const R: TRect); static;
     class procedure DrawElement(DC: HDC; AItem: TSkinToolbarElement; const R: TRect);
+    class procedure DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap);
   end;
 
 const
@@ -320,6 +347,9 @@ begin
       R.Top := rCaptionRect.Top + (rCaptionRect.Height - FToolbar.Border.Height) div 2;
       R.Right := R.Left + FToolbar.Border.Width;
       R.Bottom := R.Top + FToolbar.Border.Height;
+
+      if FToolbar.FOffset.X = -1 then
+        FToolbar.FOffset := r.TopLeft;
 
       if PtInRect(r, p) then
         Result := HTCAPTIONTOOLBAR;
@@ -577,6 +607,7 @@ begin
     begin
       /// 防止出现绘制出多余区域，当区域不够时需要进行剪切。
       ///  如： 窗体缩小时
+      CurrentIdx := 0;
       bClipRegion := rCaptionRect.Width < FToolbar.Border.Width;
       if bClipRegion then
       begin
@@ -692,6 +723,9 @@ begin
 
   if iHit <> FHotHit then
   begin
+    if FHotHit = HTCAPTIONTOOLBAR then
+      FToolbar.MouseLeave;
+
     FHotHit := iHit;
     InvalidateNC;
   end;
@@ -737,31 +771,34 @@ begin
   end;
 end;
 
-procedure TskForm.WMNCLButtonDown(var message: TWMNCHitMessage);
+procedure TskForm.WMNCLButtonDown(var message: TWMNCLButtonDown);
 var
   iHit: integer;
 begin
-  inherited;
-
   iHit := HTNOWHERE;
   if (Message.HitTest = HTCLOSE) or (Message.HitTest = HTMAXBUTTON) or (Message.HitTest = HTMINBUTTON) or
-    (Message.HitTest = HTHELP) then
-  begin
+    (Message.HitTest = HTHELP) or (Message.HitTest > HTCUSTOM) then
     iHit := Message.HitTest;
+
+
+  /// 只处理系统按钮和自定义区域
+  if iHit <> HTNOWHERE then
+  begin
+    if iHit <> FPressedHit then
+    begin
+      FPressedHit := iHit;
+      if FPressedHit = HTCAPTIONTOOLBAR then
+        FToolbar.HandleMessage(TMessage(message));
+      InvalidateNC;
+    end;
 
     Message.Result := 0;
     Message.Msg := WM_NULL;
     Handled := True;
   end;
-
-  if iHit <> FPressedHit then
-  begin
-    FPressedHit := iHit;
-    InvalidateNC;
-  end;
 end;
 
-procedure TskForm.WMNCLButtonUp(var Message: TWMNCHitMessage);
+procedure TskForm.WMNCLButtonUp(var Message: TWMNCLButtonUp);
 var
   iWasHit: Integer;
 begin
@@ -774,10 +811,12 @@ begin
     if iWasHit = FHotHit then
     begin
       case Message.HitTest of
-        HTCLOSE     : SendMessage(Handle, WM_SYSCOMMAND, SC_CLOSE, 0);
-        HTMAXBUTTON : Maximize;
-        HTMINBUTTON : Minimize;
-        HTHELP      : SendMessage(Handle, WM_SYSCOMMAND, SC_CONTEXTHELP, 0);
+        HTCLOSE           : SendMessage(Handle, WM_SYSCOMMAND, SC_CLOSE, 0);
+        HTMAXBUTTON       : Maximize;
+        HTMINBUTTON       : Minimize;
+        HTHELP            : SendMessage(Handle, WM_SYSCOMMAND, SC_CONTEXTHELP, 0);
+
+        HTCAPTIONTOOLBAR  : FToolbar.HandleMessage(TMessage(Message));
       end;
 
       Message.Result := 0;
@@ -789,8 +828,16 @@ end;
 
 procedure TskForm.WMNCMouseMove(var Message: TWMNCMouseMove);
 begin
-  if (FPressedHit <> HTNOWHERE) and (FPressedHit <> Message.HitTest) then
-    FPressedHit := HTNOWHERE;
+  if Message.HitTest = HTCAPTIONTOOLBAR then
+  begin
+    FToolbar.HandleMessage(TMessage(Message));
+    Handled := True;
+  end
+  else
+  begin
+    if (FPressedHit <> HTNOWHERE) and (FPressedHit <> Message.HitTest) then
+      FPressedHit := HTNOWHERE;
+  end;
 end;
 
 procedure TskForm.WMSetText(var Message: TMessage);
@@ -936,23 +983,25 @@ begin
   DrawTransparentBitmap(FData, rSrcOff.X, rSrcOff.Y, DC, x, y, SIZE_RESICON, SIZE_RESICON);
 end;
 
-
-class procedure SkinData.DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect);
+class procedure SkinData.DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect; const Opacity: Byte = 255);
 var
   hB: HBRUSH;
   iColor: Cardinal;
 begin
-  /// 绘制背景
-  case AState of
-    siHover         : iColor := SKINCOLOR_BTNHOT;
-    siPressed       : iColor := SKINCOLOR_BTNPRESSED;
-    siSelected      : iColor := SKINCOLOR_BTNPRESSED;
-    siHoverSelected : iColor := SKINCOLOR_BTNHOT;
-  else                iColor := SKINCOLOR_BAKCGROUND;
+  if AState <> siInactive then
+  begin
+    /// 绘制背景
+    case AState of
+      siHover         : iColor := SKINCOLOR_BTNHOT;
+      siPressed       : iColor := SKINCOLOR_BTNPRESSED;
+      siSelected      : iColor := SKINCOLOR_BTNPRESSED;
+      siHoverSelected : iColor := SKINCOLOR_BTNHOT;
+    else                iColor := SKINCOLOR_BAKCGROUND;
+    end;
+    hB := CreateSolidBrush(iColor);
+    FillRect(DC, R, hB);
+    DeleteObject(hB);
   end;
-  hB := CreateSolidBrush(iColor);
-  FillRect(DC, R, hB);
-  DeleteObject(hB);
 end;
 
 class procedure SkinData.DrawElement(DC: HDC; AItem: TSkinToolbarElement; const R: TRect);
@@ -969,7 +1018,23 @@ begin
   DrawTransparentBitmap(FData, rSrc.x, rSrc.y, DC, x, y, rSrc.w, rSrc.h);
 end;
 
+class procedure SkinData.DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap);
+var
+  iXOff: Integer;
+  iYOff: Integer;
+begin
+  iXOff := r.Left + (R.Right - R.Left - ASrc.Width) div 2;
+  iYOff := r.Top + (r.Bottom - r.Top - ASrc.Height) div 2;
+  DrawTransparentBitmap(ASrc, 0, 0, DC, iXOff, iYOff, ASrc.Width, ASrc.Height);
+end;
+
 { TcpToolbar }
+constructor TcpToolbar.Create(AOwner: TskForm);
+begin
+  inherited;
+  FHotIndex := -1;
+  FPressedIndex := -1;
+end;
 
 procedure TcpToolbar.Add(Action: TBasicAction; AImageIndex: Integer);
 begin
@@ -979,6 +1044,8 @@ begin
   ZeroMemory(@FItems[FCount], SizeOf(TcpToolButton));
   FItems[FCount].Action := Action;
   FItems[FCount].ImageIndex := AImageIndex;
+  FItems[FCount].Width := 20;
+  FItems[FCount].Fade  := 255;
 
   inc(FCount);
 
@@ -988,15 +1055,19 @@ end;
 function TcpToolbar.CalcSize: TRect;
 const
   SIZE_SPLITER = 10;
-  SIZE_BUTTON = 16;
   SIZE_POPMENU = 10;
+  SIZE_BUTTON  = 20;
 var
   w, h: Integer;
+  I: Integer;
 begin
   ///
   ///  占用宽度
   ///     如果考虑比较复杂的按钮样式和显示标题等功能，那么需要计算每个按钮实际占用宽度才能获得。
-  w := SIZE_SPLITER * 2 + SIZE_POPMENU + SIZE_BUTTON * FCount;
+
+  w := SIZE_SPLITER * 2 + SIZE_POPMENU;
+  for I := 0 to FCount - 1 do
+    w := w + FItems[i].Width;
   h := SIZE_BUTTON;
   Result := Rect(0, 0, w, h);
 end;
@@ -1013,6 +1084,57 @@ begin
   end;
 end;
 
+function TcpToolbar.HitTest(P: TPoint): integer;
+var
+  iOff: Integer;
+  iIdx: integer;
+  I: Integer;
+begin
+  ///
+  ///  检测鼠标位置
+  ///    鼠标位置的 FCount位 为工具条系统菜单位置。
+  iIdx := -1;
+  iOff := RES_CAPTIONTOOLBAR.w;
+  if p.x > iOff then
+  begin
+    for I := 0 to FCount - 1 do
+    begin
+      if p.X < iOff then
+        Break;
+
+      iIdx := i;
+      inc(iOff, FItems[i].Width);
+    end;
+
+    if p.x > iOff then
+    begin
+      iIdx := -1;
+      inc(iOff, RES_CAPTIONTOOLBAR.w);
+      if p.x > iOff then
+        iIdx := FCount;  // FCount 为系统菜单按钮
+    end;
+  end;
+
+  Result := iIdx;
+end;
+
+procedure TcpToolbar.ExecAction(Index: Integer);
+begin
+  ///
+  /// 执行命令
+  ///
+  if (Index >= 0) and (Index < FCount) then
+    FItems[Index].Action.Execute;
+
+  // FCount位 为系统配置按钮
+  if Index = FCount then
+    PopConfigMenu;
+end;
+
+procedure TcpToolbar.PopConfigMenu;
+begin
+end;
+
 function TcpToolbar.IndexOf(Action: TBasicAction): Integer;
 var
   I: Integer;
@@ -1026,24 +1148,120 @@ begin
     end;
 end;
 
-procedure TcpToolbar.Paint(DC: HDC);
-var
-  r: TRect;
+procedure TcpToolbar.MouseDown(Button: TMouseButton; p: TPoint);
 begin
-  //SkinData.DrawButtonBackground(DC, siHover, Border);
+  if (mbLeft = Button) then
+  begin
+    FPressedIndex := HitTest(p);
+    //Invalidate;
+  end;
+end;
+
+procedure TcpToolbar.MouseLeave;
+begin
+  if FHotIndex >= 0 then
+  begin
+    FHotIndex := -1;
+    //Invalidate;
+  end;
+end;
+
+procedure TcpToolbar.HitWindowTest(P: TPoint);
+begin
+  FHotIndex := HitTest(P);
+end;
+
+procedure TcpToolbar.MouseMove(p: TPoint);
+var
+  iIdx: Integer;
+begin
+  iIdx := HitTest(p);
+  if iIdx <> FHotIndex then
+  begin
+    FHotIndex := iIdx;
+    Invalidate;
+  end;
+end;
+
+procedure TcpToolbar.MouseUp(Button: TMouseButton; p: TPoint);
+var
+  iAction: Integer;
+begin
+  if (mbLeft = Button) and (FPressedIndex >= 0) and (FHotIndex = FPressedIndex) then
+  begin
+    iAction := FPressedIndex;
+    FPressedIndex := -1;
+    Invalidate;
+
+    ExecAction(iAction);
+  end;
+end;
+
+function TcpToolbar.LoadActionIcon(Idx: Integer; AImg: TBitmap):Boolean;
+var
+  bHasImg: Boolean;
+begin
+  /// 获取Action的图标
+  AImg.Canvas.Brush.Color := clBlack;
+  AImg.Canvas.FillRect(Rect(0,0, AImg.Width, AImg.Height));
+  bHasImg := False;
+  if (FImages <> nil) and (FItems[Idx].ImageIndex >= 0) then
+    bHasImg := FImages.GetBitmap(FItems[Idx].ImageIndex, AImg);
+  if not bHasImg and (FItems[Idx].Action is TCustomAction) then
+    with TCustomAction(FItems[Idx].Action) do
+      if (Images <> nil) and (ImageIndex >= 0) then
+        bHasImg := Images.GetBitmap(ImageIndex, AImg);
+  Result := bHasImg;
+end;
+
+procedure TcpToolbar.Paint(DC: HDC);
+
+  function GetActionState(Idx: Integer): TSkinIndicator;
+  begin
+    Result := siInactive;
+    if (Idx = FPressedIndex) and (FHotIndex = FPressedIndex) then
+      Result := siPressed
+    else if Idx = FHotIndex then
+      Result := siHover;
+  end;
+
+var
+  cImg: TBitmap;
+  r: TRect;
+  I: Integer;
+begin
+  ///
+  ///  工具条绘制
+  ///
 
   /// 分割线
   r := Border;
   r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
   SkinData.DrawElement(DC, steSplitter, r);
-
   OffsetRect(r, r.Right - r.Left, 0);
-  r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
-  SkinData.DrawElement(DC, stePopdown, r);
 
-  OffsetRect(r, r.Right - r.Left, 0);
+  /// 绘制Button
+  cImg := TBitmap.Create;
+  cImg.PixelFormat := pf32bit;
+  cImg.alphaFormat := afIgnored;
+  for I := 0 to FCount - 1 do
+  begin
+    r.Right := r.Left + FItems[i].Width;
+    SkinData.DrawButtonBackground(DC, GetActionState(i), r, FItems[i].Fade);
+    if LoadActionIcon(i, cImg) then
+      SkinData.DrawIcon(DC, r, cImg);
+    OffsetRect(r, r.Right - r.Left, 0);
+  end;
+  cImg.free;
+
+  /// 分割条
   r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
   SkinData.DrawElement(DC, steSplitter, r);
+  OffsetRect(r, r.Right - r.Left, 0);
+
+  /// 绘制下拉菜单
+  r.Right := r.Left + RES_CAPTIONTOOLBAR.w;
+  SkinData.DrawElement(DC, stePopdown, r);
 end;
 
 constructor TFormCaptionPlugin.Create(AOwner: TskForm);
@@ -1051,11 +1269,61 @@ begin
   FOwner := AOwner;
   FVisible := True;
   FBorder := CalcSize;
+  FOffset.X := -1;
+end;
+
+function TFormCaptionPlugin.ScreenToClient(x, y: Integer): TPoint;
+var
+  P: TPoint;
+begin
+  /// 调整位置
+  ///    以 FOffset 为中心位置
+  P := FOwner.NormalizePoint(Point(x, Y));
+  p.X := p.X - FOffset.X;
+  p.Y := p.y - FOffset.Y;
+
+  Result := p;
+end;
+
+
+function TFormCaptionPlugin.HandleMessage(var Message: TMessage): Boolean;
+begin
+  Result := True;
+
+  case Message.Msg of
+    WM_NCMOUSEMOVE    : MouseMove(ScreenToClient(TWMNCMouseMove(Message).XCursor, TWMNCMouseMove(Message).YCursor));
+    WM_NCLBUTTONDOWN  : MouseDown(mbLeft, ScreenToClient(TWMNCLButtonDown(Message).XCursor, TWMNCLButtonDown(Message).YCursor));
+    WM_NCHITTEST      : HitWindowTest(ScreenToClient(TWMNCHitTest(Message).XPos, TWMNCHitTest(Message).YPos));
+    WM_NCLBUTTONUP    : MouseUp(mbLeft, ScreenToClient(TWMNCLButtonUp(Message).XCursor, TWMNCLButtonUp(Message).YCursor));
+
+    else
+      Result := False;
+  end;
+end;
+
+procedure TFormCaptionPlugin.HitWindowTest(P: TPoint);
+begin
 end;
 
 procedure TFormCaptionPlugin.Invalidate;
 begin
   FOwner.InvalidateNC;
+end;
+
+procedure TFormCaptionPlugin.MouseDown(Button: TMouseButton; p: TPoint);
+begin
+end;
+
+procedure TFormCaptionPlugin.MouseLeave;
+begin
+end;
+
+procedure TFormCaptionPlugin.MouseMove(p: TPoint);
+begin
+end;
+
+procedure TFormCaptionPlugin.MouseUp(Button: TMouseButton; p: TPoint);
+begin
 end;
 
 procedure TFormCaptionPlugin.Update;
