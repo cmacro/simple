@@ -48,7 +48,6 @@ type
     property Visible: Boolean read FVisible;
   end;
 
-
   TcpToolButton = record
     Action: TBasicAction;
     ImageIndex: Integer;    // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
@@ -70,6 +69,7 @@ type
     procedure PopConfigMenu;
     function  HitTest(P: TPoint): integer;
     function  LoadActionIcon(Idx: Integer; AImg: TBitmap):Boolean;
+    procedure SetImages(const Value: TCustomImageList);
   protected
     // 绘制按钮样式
     procedure Paint(DC: HDC); override;
@@ -89,7 +89,7 @@ type
     procedure Delete(Index: Integer);
     function  IndexOf(Action: TBasicAction): Integer;
 
-    property Images: TCustomImageList read FImages write FImages;
+    property Images: TCustomImageList read FImages write SetImages;
   end;
 
 
@@ -1133,6 +1133,12 @@ end;
 
 procedure TcpToolbar.PopConfigMenu;
 begin
+end;
+
+procedure TcpToolbar.SetImages(const Value: TCustomImageList);
+begin
+  FImages := Value;
+  Invalidate;
 end;
 
 function TcpToolbar.IndexOf(Action: TBasicAction): Integer;

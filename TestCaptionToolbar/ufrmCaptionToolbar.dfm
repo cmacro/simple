@@ -2673,6 +2673,15 @@ object Form11: TForm11
       Action = Action3
     end
   end
+  object CheckBox1: TCheckBox
+    Left = 56
+    Top = 200
+    Width = 97
+    Height = 17
+    Caption = #20351#29992#40664#35748#22270#26631
+    TabOrder = 6
+    OnClick = CheckBox1Click
+  end
   object ActionList1: TActionList
     Images = ImageList1
     Left = 80

@@ -27,10 +27,12 @@ type
     Action3: TAction;
     ImageList1: TImageList;
     ImageList2: TImageList;
+    CheckBox1: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure Action1Execute(Sender: TObject);
     procedure Action2Execute(Sender: TObject);
     procedure Action3Execute(Sender: TObject);
+    procedure CheckBox1Click(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
   private
     FTest: TskForm;
@@ -91,6 +93,15 @@ end;
 procedure TForm11.Action3Execute(Sender: TObject);
 begin
   Action1.Enabled := not Action1.Enabled;
+end;
+
+procedure TForm11.CheckBox1Click(Sender: TObject);
+begin
+  if CheckBox1.Checked then
+    FTest.Toolbar.Images := nil
+  else
+    FTest.Toolbar.Images := ImageList2;
+
 end;
 
 procedure TForm11.SpeedButton1Click(Sender: TObject);
