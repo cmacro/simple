@@ -34,9 +34,9 @@ type
     FIcon: TIcon;
     FIconHandle: HICON;
 
-    //
-    FPressedHit: Integer;     // 实际按下的位置, (只处理关心的位置，其他有交由系统处理)
-    FHotHit: integer;         // 记录上次的测试位置 (只处理关心的位置，其他有交由系统处理)
+    // 操作位置，只处理监控的位置，其他有交由系统处理
+    FPressedHit: Integer;     // 实际按下的位置, 
+    FHotHit: integer;         // 记录上次的测试位置 
 
     // skin
     //  这个内容应独立出来，作为单独一份配置应用于所有窗体。
@@ -60,7 +60,6 @@ type
     // 第一组 实现绘制基础
     procedure WMNCPaint(var message: TWMNCPaint); message WM_NCPAINT;
     procedure WMNCActivate(var message: TMessage); message WM_NCACTIVATE;
-    procedure WMNCLButtonDown(var message: TWMNCHitMessage); message WM_NCLBUTTONDOWN;
     procedure WMNCUAHDrawCaption(var message: TMessage); message WM_NCUAHDRAWCAPTION;
 
     // 第二组 控制窗体样式
@@ -73,6 +72,7 @@ type
 
     // 第四组 控制按钮状态
     procedure WMNCHitTest(var Message: TWMNCHitTest); message WM_NCHITTEST;
+    procedure WMNCLButtonDown(var message: TWMNCHitMessage); message WM_NCLBUTTONDOWN;
     procedure WMNCLButtonUp(var Message: TWMNCHitMessage); message WM_NCLBUTTONUP;
     procedure WMNCMouseMove(var Message: TWMNCMouseMove); message WM_NCMOUSEMOVE;
 
@@ -695,19 +695,20 @@ begin
   P := NormalizePoint(Point(Message.XPos, Message.YPos));
 
   // 获取 位置
+  // 只对监控区域处理，其他由系统处理
   iHit := HitTest(p);
   if FHotHit > HTNOWHERE then
   begin
     Message.Result := iHit;
-    Handled := True;
+    Handled := True;            // 处理完成，不再交由系统处理
   end;
-
+  
+  // 响应鼠标滑入监控区域后，通知非客户区重绘
   if iHit <> FHotHit then
   begin
     FHotHit := iHit;
     InvalidateNC;
   end;
-
 end;
 
 procedure TTest.WMWindowPosChanging(var message: TWMWindowPosChanging);
@@ -760,7 +761,6 @@ begin
     (Message.HitTest = HTHELP) then
   begin
     iHit := Message.HitTest;
-
     Message.Result := 0;
     Message.Msg := WM_NULL;
     Handled := True;
