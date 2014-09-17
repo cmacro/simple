@@ -3,7 +3,7 @@ unit uFormSkins;
 interface
 
 uses
-  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types, ImgList, ActnList;
+  Classes, windows, Controls, Graphics, Forms, messages, pngimage, Types, ImgList, Actions, ActnList;
 
 const
   WM_NCUAHDRAWCAPTION = $00AE;
@@ -50,9 +50,12 @@ type
 
   TcpToolButton = record
     Action: TBasicAction;
-    ImageIndex: Integer;    // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
-    Width: Word;            // 实际占用宽度，考虑后续加不同的按钮样式使用
-    Fade: Word              // 褪色量 0 - 255
+    Enabled: boolean;
+    Visible: Boolean;
+    ImageIndex: Integer;        // 考虑到标题功能图标和实际工具栏功能使用不同图标情况，分开图标索引
+    Width: Word;                // 实际占用宽度，考虑后续加不同的按钮样式使用
+    Fade: Word;                 // 褪色量 0 - 255
+    SaveEvent: TNotifyEvent;    // 原始的Action OnChange事件
   end;
 
   TcpToolbar = class(TFormCaptionPlugin)
@@ -70,6 +73,7 @@ type
     function  HitTest(P: TPoint): integer;
     function  LoadActionIcon(Idx: Integer; AImg: TBitmap):Boolean;
     procedure SetImages(const Value: TCustomImageList);
+    procedure DoOnActionChange(Sender: TObject);
   protected
     // 绘制按钮样式
     procedure Paint(DC: HDC); override;
@@ -150,6 +154,7 @@ type
     procedure WMNCMouseMove(var Message: TWMNCMouseMove); message WM_NCMOUSEMOVE;
     procedure WMSetText(var Message: TMessage); message WM_SETTEXT;
 
+
     procedure WndProc(var message: TMessage);
 
     procedure CallDefaultProc(var message: TMessage);
@@ -182,6 +187,7 @@ const
 
 type
   TacWinControl = class(TWinControl);
+  TacAction = class(TBasicAction);
 
   Res = class
     class procedure LoadGraphic(const AName: string; AGraphic: TGraphic);
@@ -209,7 +215,7 @@ type
     class procedure DrawButtonBackground(DC: HDC; AState: TSkinIndicator; const R: TRect; const Opacity: Byte = 255); static;
     class procedure DrawButton(DC: HDC; AKind: TFormButtonKind; AState: TSkinIndicator; const R: TRect); static;
     class procedure DrawElement(DC: HDC; AItem: TSkinToolbarElement; const R: TRect);
-    class procedure DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap);
+    class procedure DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap; const Opacity: Byte = 255);
   end;
 
 const
@@ -1018,14 +1024,14 @@ begin
   DrawTransparentBitmap(FData, rSrc.x, rSrc.y, DC, x, y, rSrc.w, rSrc.h);
 end;
 
-class procedure SkinData.DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap);
+class procedure SkinData.DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap; const Opacity: Byte = 255);
 var
   iXOff: Integer;
   iYOff: Integer;
 begin
   iXOff := r.Left + (R.Right - R.Left - ASrc.Width) div 2;
   iYOff := r.Top + (r.Bottom - r.Top - ASrc.Height) div 2;
-  DrawTransparentBitmap(ASrc, 0, 0, DC, iXOff, iYOff, ASrc.Width, ASrc.Height);
+  DrawTransparentBitmap(ASrc, 0, 0, DC, iXOff, iYOff, ASrc.Width, ASrc.Height, Opacity);
 end;
 
 { TcpToolbar }
@@ -1043,9 +1049,13 @@ begin
 
   ZeroMemory(@FItems[FCount], SizeOf(TcpToolButton));
   FItems[FCount].Action := Action;
+  FItems[FCount].Enabled := true;
+  FItems[FCount].Visible := True;
   FItems[FCount].ImageIndex := AImageIndex;
   FItems[FCount].Width := 20;
   FItems[FCount].Fade  := 255;
+  FItems[FCount].SaveEvent := TacAction(Action).OnChange;
+  TacAction(Action).OnChange := DoOnActionChange;
 
   inc(FCount);
 
@@ -1076,11 +1086,47 @@ procedure TcpToolbar.Delete(Index: Integer);
 begin
   if (Index >= 0) and (Index < FCount) then
   begin
+    /// 删除时需要恢复
+    TacAction(FItems[Index].Action).OnChange := FItems[Index].SaveEvent;
+
     if Index < (FCount - 1) then
       Move(FItems[Index+1], FItems[Index], sizeof(TcpToolButton) * (FCount - Index - 1));
     dec(FCount);
 
     Update;
+  end;
+end;
+
+procedure TcpToolbar.DoOnActionChange(Sender: TObject);
+var
+  idx: Integer;
+  bResize: Boolean;
+begin
+  if Sender is TBasicAction then
+  begin
+    idx := IndexOf(TBasicAction(Sender));
+    if (idx >= 0) and (idx < FCount) then
+    begin
+      ///
+      ///  外部状态改变响应
+      ///
+      if FItems[idx].Action.InheritsFrom(TContainedAction) then
+      begin
+        FItems[idx].Enabled := TContainedAction(Sender).Enabled;
+        bResize := FItems[idx].Visible <> TContainedAction(Sender).Visible;
+        if bResize then
+        begin
+          FItems[idx].Visible := not FItems[idx].Visible;
+          Update
+        end
+        else
+          Invalidate;
+      end;
+
+      /// 执行原有事件
+      if Assigned(FItems[idx].SaveEvent) then
+        FItems[idx].SaveEvent(Sender);
+    end;
   end;
 end;
 
@@ -1232,9 +1278,10 @@ procedure TcpToolbar.Paint(DC: HDC);
   end;
 
 var
-  cImg: TBitmap;
+  cIcon: TBitmap;
   r: TRect;
   I: Integer;
+  iOpacity: byte;
 begin
   ///
   ///  工具条绘制
@@ -1247,18 +1294,27 @@ begin
   OffsetRect(r, r.Right - r.Left, 0);
 
   /// 绘制Button
-  cImg := TBitmap.Create;
-  cImg.PixelFormat := pf32bit;
-  cImg.alphaFormat := afIgnored;
+  cIcon := TBitmap.Create;
+  cIcon.PixelFormat := pf32bit;
+  cIcon.alphaFormat := afIgnored;
   for I := 0 to FCount - 1 do
   begin
     r.Right := r.Left + FItems[i].Width;
-    SkinData.DrawButtonBackground(DC, GetActionState(i), r, FItems[i].Fade);
-    if LoadActionIcon(i, cImg) then
-      SkinData.DrawIcon(DC, r, cImg);
+    if FItems[I].Enabled then
+      SkinData.DrawButtonBackground(DC, GetActionState(i), r, FItems[i].Fade);
+    if LoadActionIcon(i, cIcon) then
+    begin
+      iOpacity := 255;
+      /// 处理不可用状态，图标颜色变暗。
+      ///   简易处理，增加绘制透明度。
+      if not FItems[i].Enabled then
+        iOpacity := 100;
+
+      SkinData.DrawIcon(DC, r, cIcon, iOpacity);
+    end;
     OffsetRect(r, r.Right - r.Left, 0);
   end;
-  cImg.free;
+  cIcon.free;
 
   /// 分割条
   r.Right := r.Left + RES_CAPTIONTOOLBAR.w;

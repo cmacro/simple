@@ -3,7 +3,9 @@ program testCaptionToolbar;
 uses
   Vcl.Forms,
   ufrmCaptionToolbar in 'ufrmCaptionToolbar.pas' {Form11},
-  uFormSkins in 'uFormSkins.pas';
+  uFormSkins in 'uFormSkins.pas',
+  Unit2 in 'Unit2.pas',
+  uTransformBmps in 'uTransformBmps.pas';
 
 {$R *.res}
 

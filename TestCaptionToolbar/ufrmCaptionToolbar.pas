@@ -101,7 +101,6 @@ begin
     FTest.Toolbar.Images := nil
   else
     FTest.Toolbar.Images := ImageList2;
-
 end;
 
 procedure TForm11.SpeedButton1Click(Sender: TObject);
