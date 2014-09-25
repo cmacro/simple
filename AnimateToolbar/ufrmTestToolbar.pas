@@ -4,8 +4,8 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uMTToolbars, System.Actions, Vcl.ActnList, Vcl.ImgList, Vcl.ComCtrls,
-  Vcl.ToolWin, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, umyToolbars, System.Actions, Vcl.ActnList, Vcl.ImgList, Vcl.ComCtrls,
+  Vcl.ToolWin, Vcl.StdCtrls, types;
 
 type
   TForm24 = class(TForm)
@@ -31,7 +31,7 @@ type
     procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
-    FToolbar: TmtToolbar;
+    FToolbar: TmyToolbar;
   public
     { Public declarations }
   end;
@@ -40,9 +40,6 @@ var
   Form24: TForm24;
 
 implementation
-
-uses
-  uUISkins;
 
 {$R *.dfm}
 
@@ -60,10 +57,9 @@ begin
 end;
 
 
-
 procedure TForm24.FormCreate(Sender: TObject);
 begin
-  FToolbar := TmtToolbar.Create(Self);
+  FToolbar := TmyToolbar.Create(Self);
   FToolbar.ShowHint := True;
   FToolbar.Parent := Self;
   FToolbar.Height := 30;
@@ -107,52 +103,48 @@ begin
 end;
 
 procedure TForm24.Button1Click(Sender: TObject);
-//var
-//  r: TRect;
-//  rFrame: TRect;
-//  I: Integer;
-//
-//  procedure DrawSkinIndicator(v: TSkinIndicator);
-//  begin
-//    mtUISkin.DrawButtonState(canvas.Handle, v, r, 255);
-//    OffsetRect(r, r.Width + 2, 0);
-//    mtUISkin.DrawButtonState(canvas.Handle, v, r, 200);
-//    OffsetRect(r, r.Width + 2, 0);
-//    mtUISkin.DrawButtonState(canvas.Handle, v, r, 180);
-//    OffsetRect(r, r.Width + 2, 0);
-//    mtUISkin.DrawButtonState(canvas.Handle, v, r, 50);
-//    OffsetRect(r, r.Width + 2, 0);
-//    mtUISkin.DrawButtonState(canvas.Handle, v, r, 0);
-//
-//  end;
+var
+  r: TRect;
+  rFrame: TRect;
+
+  procedure DrawSkinIndicator(v: TSkinIndicator);
+  begin
+    UISkin.DrawButtonState(canvas.Handle, v, r, 255);
+    OffsetRect(r, r.Width + 2, 0);
+    UISkin.DrawButtonState(canvas.Handle, v, r, 200);
+    OffsetRect(r, r.Width + 2, 0);
+    UISkin.DrawButtonState(canvas.Handle, v, r, 180);
+    OffsetRect(r, r.Width + 2, 0);
+    UISkin.DrawButtonState(canvas.Handle, v, r, 50);
+    OffsetRect(r, r.Width + 2, 0);
+    UISkin.DrawButtonState(canvas.Handle, v, r, 0);
+  end;
 
 var
   cCtrl: TWinControl;
 begin
-//  //FToolbar.Top := FToolbar.Top + 20;
-//  r := Rect(10, 30, 30, 50);
-//  rFrame := r;
-//
-//  DrawSkinIndicator(siInactive);
-//  r := Rect(10, 30, 30, 50);
-//  OffsetRect(r, 0, r.Height + 2);
-//  DrawSkinIndicator(siHover);
-//  r := Rect(10, 30, 30, 50);
-//  OffsetRect(r, 0, r.Height + 2);
-//  OffsetRect(r, 0, r.Height + 2);
-//  DrawSkinIndicator(siHover);
-//
-//
-//
-//  rFrame.BottomRight := r.BottomRight;
-//  InflateRect(rFrame, 2, 2);
-//  OffsetRect(rFrame, -1, -1);
-//  canvas.Pen.Color := clBlue;
-//  Canvas.MoveTo(rFrame.Left, rFrame.Top);
-//  Canvas.LineTo(rFrame.Right, rFrame.Top);
-//  Canvas.LineTo(rFrame.Right, rFrame.Bottom);
-//  Canvas.LineTo(rFrame.Left, rFrame.Bottom);
-//  Canvas.LineTo(rFrame.Left, rFrame.Top);
+  Repaint;
+  r := Rect(10, 30, 30, 50);
+  rFrame := r;
+
+  DrawSkinIndicator(siInactive);
+  r := Rect(10, 30, 30, 50);
+  OffsetRect(r, 0, r.Height + 2);
+  DrawSkinIndicator(siHover);
+  r := Rect(10, 30, 30, 50);
+  OffsetRect(r, 0, r.Height + 2);
+  OffsetRect(r, 0, r.Height + 2);
+  DrawSkinIndicator(siHover);
+
+  rFrame.BottomRight := r.BottomRight;
+  InflateRect(rFrame, 2, 2);
+  OffsetRect(rFrame, -1, -1);
+  canvas.Pen.Color := clBlue;
+  Canvas.MoveTo(rFrame.Left, rFrame.Top);
+  Canvas.LineTo(rFrame.Right, rFrame.Top);
+  Canvas.LineTo(rFrame.Right, rFrame.Bottom);
+  Canvas.LineTo(rFrame.Left, rFrame.Bottom);
+  Canvas.LineTo(rFrame.Left, rFrame.Top);
 
 
   cCtrl := FindVCLWindow(FToolbar.ClientToScreen(Point(10, 10)));

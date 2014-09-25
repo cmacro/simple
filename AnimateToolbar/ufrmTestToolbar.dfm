@@ -11,7 +11,7 @@ object Form24: TForm24
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  ShowHint = False
+  Position = poDesktopCenter
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
@@ -49,7 +49,7 @@ object Form24: TForm24
   end
   object Button1: TButton
     Left = 240
-    Top = 112
+    Top = 244
     Width = 75
     Height = 25
     Hint = 'test'
@@ -107,7 +107,7 @@ object Form24: TForm24
     Left = 208
     Top = 40
     Bitmap = {
-      494C010157006000200010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
+      494C010157006000240010001000FFFFFFFF2110FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000006001000001002000000000000060
       0100000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000

@@ -1,30 +1,17 @@
-/// {:
-/// ****************************************************************************
-/// 模块名称：自定义工具条
-/// 功能描述：
-///
-///
-/// 创建日期：2014-9-23
-/// 公布接口及说明：
-///
-/// ┌────────────────┬─────┐
-/// │ chenzw         │ ^_^ │
-/// ├────────────────┼──┬──┤
-/// └────────────────┴─────┘
-///
-/// 版权所有 (C) 2014 上海兴安得力软件有限公司
-/// ****************************************************************************
-/// }
-
-unit uMTToolbars;
+unit umyToolbars;
 
 interface
 
 uses
-  Classes, Windows, Messages, Controls, Actions, ImgList, Graphics, ActnList, Forms, Menus, SysUtils;
+  Classes, Windows, Messages, Controls, Actions, ImgList, Graphics, ActnList, Forms,
+  Menus, SysUtils, Types;
 
 type
-  TmtToolItem = record
+  TSkinIndicator = (
+    siInactive, siHover, siPressed, siSelected, siHoverSelected
+    );
+
+  TmyToolItem = record
     Action: TBasicAction;
     Enabled: boolean;
     Visible: boolean;
@@ -34,10 +21,10 @@ type
     SaveEvent: TNotifyEvent;  // 原始的Action OnChange事件
   end;
 
-  TmtCustomToolbar = class(TWinControl)
+  TmyCustomToolbar = class(TWinControl)
   private
     FAutoWidth: Boolean;
-    FItems: array of TmtToolItem;
+    FItems: array of TmyToolItem;
     FCount: Integer;
     FImages: TCustomImageList;
 
@@ -85,9 +72,18 @@ type
 
   end;
 
-  TmtToolbar = class(TmtCustomToolbar)
+  TmyToolbar = class(TmyCustomToolbar)
   published
     property Color;
+  end;
+
+  UISkin = class
+  private
+    class procedure DrawTransparentBitmap(Source: TBitmap; sx, sy: Integer;
+        Destination: HDC; const dX, dY: Integer; w, h: Integer; const Opacity: Byte); overload;
+  public
+    class procedure DrawButtonState(DC: HDC; AState: TSkinIndicator; const R:TRect; const AOpacity: Byte); static;
+    class procedure DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap; const Opacity: Byte = 255);
   end;
 
 
@@ -100,12 +96,15 @@ CONST
 type
   TacAction = class(TBasicAction);
 
-procedure TmtCustomToolbar.Add(Action: TBasicAction; AImageIndex: Integer);
+
+
+
+procedure TmyCustomToolbar.Add(Action: TBasicAction; AImageIndex: Integer);
 begin
   if FCount >= Length(FItems) then
     SetLength(FItems, FCount + 5);
 
-  ZeroMemory(@FItems[FCount], SizeOf(TmtToolItem));
+  ZeroMemory(@FItems[FCount], SizeOf(TmyToolItem));
   FItems[FCount].Action := Action;
   FItems[FCount].Enabled := true;
   FItems[FCount].Visible := true;
@@ -128,7 +127,7 @@ begin
   UpdateSize;
 end;
 
-function TmtCustomToolbar.CalcSize: TRect;
+function TmyCustomToolbar.CalcSize: TRect;
 const
   SIZE_SPLITER = 10;
   SIZE_POPMENU = 10;
@@ -150,7 +149,7 @@ begin
   Result := Rect(0, 0, w, h);
 end;
 
-procedure TmtCustomToolbar.CMHintShow(var Message: TCMHintShow);
+procedure TmyCustomToolbar.CMHintShow(var Message: TCMHintShow);
 var
   Idx: Integer;
   sHint: string;
@@ -195,7 +194,7 @@ begin
     Message.Result := 1;
 end;
 
-constructor TmtCustomToolbar.Create(AOwner: TComponent);
+constructor TmyCustomToolbar.Create(AOwner: TComponent);
 begin
   inherited;
   inherited Height := 20;
@@ -205,7 +204,7 @@ begin
   FAutoWidth := true;
 end;
 
-destructor TmtCustomToolbar.Destroy;
+destructor TmyCustomToolbar.Destroy;
 begin
   if HandleAllocated  then
     KillTimer(Handle, TIMID_FADE);
@@ -213,7 +212,7 @@ begin
   inherited;
 end;
 
-procedure TmtCustomToolbar.DoOnActionChange(Sender: TObject);
+procedure TmyCustomToolbar.DoOnActionChange(Sender: TObject);
 var
   Idx: Integer;
   bResize: boolean;
@@ -246,7 +245,7 @@ begin
   end;
 end;
 
-procedure TmtCustomToolbar.ExecAction(Index: Integer);
+procedure TmyCustomToolbar.ExecAction(Index: Integer);
 begin
   ///
   /// 执行命令
@@ -255,7 +254,7 @@ begin
     FItems[Index].Action.Execute;
 end;
 
-function TmtCustomToolbar.GetActualWidth: Integer;
+function TmyCustomToolbar.GetActualWidth: Integer;
 var
   R: TRect;
 begin
@@ -263,7 +262,7 @@ begin
   Result := r.Width;
 end;
 
-function TmtCustomToolbar.HitTest(x, y: Integer): Integer;
+function TmyCustomToolbar.HitTest(x, y: Integer): Integer;
 var
   I: Integer;
   Idx: Integer;
@@ -292,7 +291,7 @@ begin
   Result := Idx;
 end;
 
-function TmtCustomToolbar.IndexOf(Action: TBasicAction): Integer;
+function TmyCustomToolbar.IndexOf(Action: TBasicAction): Integer;
 var
   I: Integer;
 begin
@@ -305,7 +304,7 @@ begin
     end;
 end;
 
-function TmtCustomToolbar.LoadActionIcon(Idx: Integer; AImg: TBitmap): boolean;
+function TmyCustomToolbar.LoadActionIcon(Idx: Integer; AImg: TBitmap): boolean;
 
   function LoadIcon(AImgs: TCustomImageList; AIndex: Integer): boolean;
   begin
@@ -335,7 +334,7 @@ begin
   Result := bHasImg;
 end;
 
-procedure TmtCustomToolbar.MouseDown(Button: TMouseButton; Shift: TShiftState; x, y: Integer);
+procedure TmyCustomToolbar.MouseDown(Button: TMouseButton; Shift: TShiftState; x, y: Integer);
 begin
   if mbLeft = Button then
   begin
@@ -344,11 +343,11 @@ begin
   end;
 end;
 
-procedure TmtCustomToolbar.MouseMove(Shift: TShiftState; x, y: Integer);
+procedure TmyCustomToolbar.MouseMove(Shift: TShiftState; x, y: Integer);
 begin
 end;
 
-procedure TmtCustomToolbar.MouseUp(Button: TMouseButton; Shift: TShiftState; x, y: Integer);
+procedure TmyCustomToolbar.MouseUp(Button: TMouseButton; Shift: TShiftState; x, y: Integer);
 var
   iPressed: Integer;
 begin
@@ -362,7 +361,7 @@ begin
   Invalidate;
 end;
 
-procedure TmtCustomToolbar.PaintBackground(DC: HDC);
+procedure TmyCustomToolbar.PaintBackground(DC: HDC);
 var
   hB: HBRUSH;
   R: TRect;
@@ -373,7 +372,7 @@ begin
   DeleteObject(hB);
 end;
 
-procedure TmtCustomToolbar.PaintWindow(DC: HDC);
+procedure TmyCustomToolbar.PaintWindow(DC: HDC);
   function GetActionState(Idx: Integer): TSkinIndicator;
   begin
     Result := siInactive;
@@ -402,7 +401,7 @@ begin
 
     R.Right := R.Left + FItems[I].Width;
     if FItems[I].Enabled then
-      mtUISkin.DrawButtonState(DC, GetActionState(I), R, FItems[I].Fade);
+      UISkin.DrawButtonState(DC, GetActionState(I), R, FItems[I].Fade);
     if LoadActionIcon(I, cIcon) then
     begin
       iOpacity := 255;
@@ -411,14 +410,14 @@ begin
       if not FItems[I].Enabled then
         iOpacity := 100;
 
-      mtUISkin.DrawIcon(DC, R, cIcon, iOpacity);
+      UISkin.DrawIcon(DC, R, cIcon, iOpacity);
     end;
     OffsetRect(R, R.Right - R.Left, 0);
   end;
   cIcon.free;
 end;
 
-procedure TmtCustomToolbar.SetAutoWidth(const Value: Boolean);
+procedure TmyCustomToolbar.SetAutoWidth(const Value: Boolean);
 begin
   if FAutoWidth <> Value then
   begin
@@ -427,7 +426,7 @@ begin
   end;
 end;
 
-procedure TmtCustomToolbar.SetHotIndex(const Value: Integer);
+procedure TmyCustomToolbar.SetHotIndex(const Value: Integer);
 begin
   if FHotIndex <> Value then
   begin
@@ -439,7 +438,7 @@ begin
   end;
 end;
 
-procedure TmtCustomToolbar.UpdateFade;
+procedure TmyCustomToolbar.UpdateFade;
 
   function GetShowAlpha(v: byte): byte; inline;
   begin
@@ -477,7 +476,7 @@ begin
     KillTimer(Handle, TIMID_FADE);
 end;
 
-procedure TmtCustomToolbar.UpdateSize;
+procedure TmyCustomToolbar.UpdateSize;
 var
   R: TRect;
 begin
@@ -490,17 +489,17 @@ begin
     Invalidate;
 end;
 
-procedure TmtCustomToolbar.WMEraseBkgnd(var message: TWMEraseBkgnd);
+procedure TmyCustomToolbar.WMEraseBkgnd(var message: TWMEraseBkgnd);
 begin
   Message.Result := 1;
 end;
 
-procedure TmtCustomToolbar.WMMouseLeave(var message: TMessage);
+procedure TmyCustomToolbar.WMMouseLeave(var message: TMessage);
 begin
   HotIndex := -1;
 end;
 
-procedure TmtCustomToolbar.WMMouseMove(var message: TWMMouseMove);
+procedure TmyCustomToolbar.WMMouseMove(var message: TWMMouseMove);
 var
   iSave: Integer;
 begin
@@ -510,7 +509,7 @@ begin
     Application.ActivateHint(message.Pos);
 end;
 
-procedure TmtCustomToolbar.WMPaint(var message: TWMPaint);
+procedure TmyCustomToolbar.WMPaint(var message: TWMPaint);
 var
   DC, hPaintDC: HDC;
   cBuffer: TBitmap;
@@ -544,10 +543,84 @@ begin
     EndPaint(Handle, PS);
 end;
 
-procedure TmtCustomToolbar.WMTimer(var message: TWMTimer);
+procedure TmyCustomToolbar.WMTimer(var message: TWMTimer);
 begin
   if message.TimerID = TIMID_FADE then
     UpdateFade;
+end;
+
+class procedure UISkin.DrawButtonState(DC: HDC; AState: TSkinIndicator; const
+    R: TRect; const AOpacity: Byte);
+const
+  SKINCOLOR_BTNHOT      = $00F2D5C2;  // Hot 激活状态
+  SKINCOLOR_BTNPRESSED  = $00E3BDA3;  // 按下状态
+
+
+  function GetColor(s: TSkinIndicator): Cardinal; inline;
+  begin
+    case s of
+      siHover         : Result := SKINCOLOR_BTNHOT;
+      siPressed       : Result := SKINCOLOR_BTNPRESSED;
+      siSelected      : Result := SKINCOLOR_BTNPRESSED;
+      siHoverSelected : Result := SKINCOLOR_BTNHOT;
+    else                Result := SKINCOLOR_BTNHOT;
+    end;
+  end;
+
+  procedure DrawStyle(DC: HDC; const R: TRect; AColor: Cardinal); inline;
+  var
+    hB: HBRUSH;
+  begin
+    hB := CreateSolidBrush(AColor);
+    FillRect(DC, R, hB);
+    DeleteObject(hB);
+  end;
+
+var
+  cBmp: TBitmap;
+begin
+  if AOpacity = 255 then
+      DrawStyle(DC, R, GetColor(AState))
+  else if AOpacity > 0 then
+  begin
+    cBmp := TBitmap.Create;
+    cBmp.SetSize(r.Width, r.Height);
+    DrawStyle(cBmp.Canvas.Handle, Rect(0, 0, r.Width, r.Height), GetColor(AState));
+    DrawTransparentBitmap(cBmp, 0, 0, DC, r.Left, r.Top, r.Width, r.Height, AOpacity);
+    cBmp.Free;
+  end;
+end;
+
+class procedure UISkin.DrawIcon(DC: HDC; R: TRect; ASrc: TBitmap; const
+    Opacity: Byte = 255);
+var
+  iXOff: Integer;
+  iYOff: Integer;
+begin
+  ///
+  ///  绘制图标
+  ///    绘制图标是会作居中处理
+  iXOff := r.Left + (R.Right - R.Left - ASrc.Width) div 2;
+  iYOff := r.Top + (r.Bottom - r.Top - ASrc.Height) div 2;
+  DrawTransparentBitmap(ASrc, 0, 0, DC, iXOff, iYOff, ASrc.Width, ASrc.Height, Opacity);
+end;
+
+class procedure UISkin.DrawTransparentBitmap(Source: TBitmap; sx, sy: Integer;
+    Destination: HDC; const dX, dY: Integer; w, h: Integer; const Opacity:
+    Byte);
+var
+  BlendFunc: TBlendFunction;
+begin
+  BlendFunc.BlendOp := AC_SRC_OVER;
+  BlendFunc.BlendFlags := 0;
+  BlendFunc.SourceConstantAlpha := Opacity;
+
+  if Source.PixelFormat = pf32bit then
+    BlendFunc.AlphaFormat := AC_SRC_ALPHA
+  else
+    BlendFunc.AlphaFormat := 0;
+
+  AlphaBlend(Destination, dX, dY, w, h, Source.Canvas.Handle, sx, sy, w, h, BlendFunc);
 end;
 
 end.
