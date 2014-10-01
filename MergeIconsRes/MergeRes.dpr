@@ -146,19 +146,19 @@ begin
   Result := False;
   if ASource = nil then
     Exit;
-
   if not DirectoryExists(ExtractFilePath(FDataFile.OutFileName)) then
     if not CreateDir(ExtractFilePath(FDataFile.OutFileName)) then
       Exit;
 
-
+  // 把资源压缩到内存流中
   cData := TMemoryStream.Create;
   try
+    // 生成一份对照Bitmap文件，用户检测合并文件是否有问题。
     ASource.SaveToStream(cData);
-
     cData.SaveToFile(FDataFile.OutFileName);
     cData.Clear;
 
+    // 生成资源使用的压缩包文件
     cPack := TZCompressionStream.Create(clMax, cData);
     try
       ASource.SaveToStream(cPack);
@@ -181,19 +181,24 @@ begin
   Result := False;
   FileName := '';
 
+  // 从参数读取资源图标维护列表
   sFileName := ChangeFileExt(ParamStr(0), '.lst');
   if ParamCount >= 1 then
     sFileName := Trim(ParamStr(1));
   if FileExists(sFileName) then
     FileName := sFileName;
 
+  // 从第二个参数中读取需要输出的资源包名称
+  // 情景：1、没有第二个参数，默认使用配置文件名
+  //       2、第二个参数是个路径，作为输出路径，文件名同配置名。
+  //       3、有明确输出文件名，直接使用。
   OutFileName := ChangeFileExt(FileName, '.bmp');
   if ParamCount >= 2 then
   begin
     sFileName := Trim(ParamStr(2));
     if (sFileName <> '') then
     begin
-      if (sFileName[Length(sFileName)] = '\') then
+      if (sFileName[Length(sFileName)] = '\') then 
         OutFileName := Format('%s%s',[sFileName, ExtractFileName(OutFileName)])
       else
       begin
@@ -205,10 +210,11 @@ begin
     end;
   end;
 
+  // 把输出文件变成完整路径，为简化后续PNG资源的加载
   if OutFileName <> '' then
     OutFileName := ExpandFileName(OutFileName);
 
-  /// 设置当前处理目录
+  /// 设置当前处理目录，为简化后续图标资源的加载
   if FileName <> '' then
   begin
     sPath := ExtractFilePath(FileName);
@@ -216,6 +222,7 @@ begin
     FileName := ExtractFileName(FileName);
   end;
 
+  // 
   if SameText(ExtractFileExt(FileName), '.lst') then
     Kind := dtIconMerge
   else
@@ -229,7 +236,7 @@ var
   bExists: Boolean;
   I: Integer;
 begin
-  // 预读文件尺寸
+  // 预读图标文件尺寸
   FIcon := TPngImage.Create;
   bExists := False;
   for I := 0 to Count - 1 do
@@ -242,6 +249,7 @@ begin
   if not bExists then
     Exit;
 
+  // 设置图标拼接行列数
   FColCnt := 10;
   FRowCnt := Count div FColCnt;
   if Count mod FColCnt > 0 then
@@ -335,9 +343,9 @@ var
   iRow: Integer;
 begin
   Result := True;
+  // 按照索引进行偏移并入
   iRow := AIndex div FColCnt;
   iCol := AIndex mod FColCnt;
-
   FIconMap.Canvas.Draw(FWidth * iCol, FHeight * iRow, FIcon);
 end;
 
