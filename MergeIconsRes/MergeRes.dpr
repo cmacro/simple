@@ -34,8 +34,10 @@ type
   private
     FParams: TParams;
     FIconMap: TBitmap;
+    FOnLogEvent: TPrintProc;
     function GetSourceFile: string;
     procedure BuildMap(w, h:Integer);
+    procedure AddLog(const AMsg: string);
   public
     destructor Destroy; override;
     constructor Create(AFiles: TParams); virtual;
@@ -44,6 +46,7 @@ type
 
     property SourceFile: string read GetSourceFile;
     property ResMap: TBitmap read FIconMap;
+    property OnLogEvent: TPrintProc read FOnLogEvent write FOnLogEvent;
   end;
 
   TPngPack = class(TConvertRes)
@@ -76,10 +79,14 @@ type
 
   TMergeSrv = class
   private
+    FLog: TStringList;
     FDataFile: TParams;
     procedure PrintHelp;
-    procedure PrintMsg(const AVal: string);
+    procedure PrintLog;
+    procedure PrintMsg(const Afmt: string; const Args: array of const); overload;
+    procedure PrintMsg(const AVal: string); overload;
     function  SaveResMap(ASource: TBitmap): Boolean;
+    procedure DoOnAddLog(const AMsg: string);
   public
     constructor Create;
     destructor Destroy; override;
@@ -90,12 +97,19 @@ type
 constructor TMergeSrv.Create;
 begin
   FDataFile := TParams.Create;
+  FLog := TStringList.Create;
 end;
 
 destructor TMergeSrv.Destroy;
 begin
   FDataFile.free;
+  FLog.free;
   inherited;
+end;
+
+procedure TMergeSrv.DoOnAddLog(const AMsg: string);
+begin
+  FLog.Add(AMsg);
 end;
 
 procedure TMergeSrv.Exec;
@@ -113,10 +127,18 @@ begin
 
     if cConvert <> nil then
     begin
+      cConvert.OnLogEvent := DoOnAddLog;
       try
+        PrintMsg('');
+        PrintMsg('Start %s', [FDataFile.FileName]);
+        //PrintMsg('_______________________________________');
         if cConvert.Exec(PrintMsg) then
           if SaveResMap(cConvert.FIconMap) then
+          begin
+            PrintMsg('_______________________________________');
             PrintMsg(format('Finish: %s',[ChangeFileExt(FDataFile.OutFileName, '.IconPack')]));
+            PrintLog;
+          end;
       finally
         cConvert.Free;
       end;
@@ -131,6 +153,19 @@ end;
 procedure TMergeSrv.PrintHelp;
 begin
   // TODO -cMM: TMergeSrv.PrintHelp default body inserted
+end;
+
+procedure TMergeSrv.PrintLog;
+var
+  I: Integer;
+begin
+  for I := 0 to FLog.Count - 1 do
+    PrintMsg(FLog[i]);
+end;
+
+procedure TMergeSrv.PrintMsg(const Afmt: string; const Args: array of const);
+begin
+  PrintMsg(format(Afmt, Args));
 end;
 
 procedure TMergeSrv.PrintMsg(const AVal: string);
@@ -178,7 +213,6 @@ var
   sFileName: string;
   sPath: string;
 begin
-  Result := False;
   FileName := '';
 
   sFileName := ChangeFileExt(ParamStr(0), '.lst');
@@ -263,8 +297,10 @@ end;
 function TMergeIcons.Exec(PrintMsg: TPrintProc): Boolean;
 var
   I: Integer;
+  iErrCnt: integer;
 begin
   Result := False;
+  iErrCnt := 0;
   if LoadImageNames then
   begin
     BuildResMap;
@@ -277,8 +313,15 @@ begin
         PrintMsg(format('ok：并入资源（%d）%s', [i, FileNames[i]]));
       end
       else
+      begin
         PrintMsg(format('Err: 无法加载 (%d)%s 文件', [i, FileNames[i]]));
+        AddLog(format('Err: 无法加载 (%d)%s 文件', [i, FileNames[i]]));
+        inc(iErrCnt);
+      end;
     end;
+
+    if iErrCnt > 0 then
+      AddLog(format('合并：%d ,%d 个文件无法正常合并', [Count, iErrCnt]));
 
     Result := True;
   end
@@ -314,18 +357,47 @@ function TMergeIcons.LoadImageNames: Boolean;
 var
   I: Integer;
   sVal: string;
+  cDatas: TStringList;
+  iCommentPos: Integer;
+  idx: Integer;
 begin
-  FFiles := TStringList.Create;
-  FFiles.LoadFromFile(SourceFile);
-  for I := FFiles.Count - 1 downto 0 do
-  begin
-    sVal := Trim(FFiles[i]);
-    if (sVal = '') or (sVal[1] = ';') or (sVal[1] = '/') then
-      FFiles.Delete(i)
-    else
-      FFiles[i] := sVal;
-  end;
+  if not Assigned(FFiles) then
+    FFiles := TStringList.Create;
 
+  cDatas := TStringList.Create;
+  try
+    cDatas.LoadFromFile(SourceFile);
+    for I := 0 to cDatas.Count - 1 do
+    begin
+      sVal := Trim(cDatas[i]);
+
+      // 去除注释行和空白行
+      if (sVal = '') or (sVal[1] = ';') or (sVal[1] = '/') then
+        sVal := '';
+
+      /// 清除后面的注释和空格
+      iCommentPos := 0;
+      if sVal <> '' then
+        for idx := 1 to Length(sVal) do
+          if CharInSet(sVal[idx], [#9, ',', ';']) then
+          begin
+            iCommentPos := idx;
+            Break;
+          end;
+      if iCommentPos > 0 then
+      begin
+        while (iCommentPos - 1 > 0) and (sVal[iCommentPos - 1] = ' ') do
+          dec(iCommentPos);
+        Delete(sVal, iCommentPos, Length(sVal));
+      end;
+
+      if sVal <> '' then
+        FFiles.Add(sVal);
+    end;
+
+  finally
+    cDatas.Free;
+  end;
   Result := FFiles.Count > 0;
 end;
 
@@ -366,6 +438,12 @@ begin
 end;
 
 { TConvertRes }
+
+procedure TConvertRes.AddLog(const AMsg: string);
+begin
+  if Assigned(FOnLogEvent) then
+    FOnLogEvent(AMsg);
+end;
 
 procedure TConvertRes.BuildMap(w, h:Integer);
 begin
