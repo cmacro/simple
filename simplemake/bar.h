@@ -1,6 +1,6 @@
 
-#ifndef __BAR_00__
-#define __BAR_00__
+#ifndef __BAR_H__
+#define __BAR_H__
 
 class Bar
 {
@@ -11,3 +11,5 @@ private:
 	int m_bar;
 
 };
+
+#endif

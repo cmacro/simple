@@ -8,9 +8,9 @@ void Bar::SetBar(int bar)
 	m_bar = bar;
 }
 
-void Bar::PuBar()
+void Bar::PutBar()
 {
 	char buf[16];
-	snprintf(buf, sizeof(bar) - 1, "%d", m_bar);
-	setenv("BAR", buf, 1);
+	snprintf(buf, sizeof(buf) - 1, "%d", m_bar);
+	//setenv("BAR", buf, 1);
 }
