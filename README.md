@@ -8,7 +8,6 @@
 * 资源合并工具**MergeIconsRes**
 * 建议工具条**AnimateToolbar**
 
-以上内容全部
 
 - **TestCaptionToolbar** 通过控制窗体皮肤方式，在标题区域增加一个快速工具条按钮区域。
   未实现：工具条提示Hint显示
