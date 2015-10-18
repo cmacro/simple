@@ -43,6 +43,7 @@ type
     constructor Create(AFiles: TParams); virtual;
 
     function Exec(PrintMsg: TPrintProc): Boolean; virtual; abstract;
+    function Save(const AOutFileName: string): Boolean; virtual;
 
     property SourceFile: string read GetSourceFile;
     property ResMap: TBitmap read FIconMap;
@@ -54,27 +55,40 @@ type
     function Exec(PrintMsg: TPrintProc): Boolean; override;
   end;
 
+
+  TIconItem = record
+    name: string;
+    ID: string;
+    comment: string;
+  end;
+
   TMergeIcons = class(TConvertRes)
   private
     FIcon: TPngImage;
     FRowCnt: Integer;
     FColCnt: Integer;
-    FFiles: TStringList;
+    //FFiles: TStringList;
+    FSource: array of TIconItem;
+    FSourceCount: Integer;
     FWidth: integer;
     FHeight: integer;
 
+    procedure BuildIconsID;
     procedure BuildResMap;
     function GetCount: Integer;
     function GetFileNames(Index: Integer): string;
     function LoadIcon(AIndex: Integer): Boolean;
     function LoadImageNames: Boolean;
     function MergeIcon(AIndex: Integer): Boolean;
+    procedure SaveResIconIndexDefine(const AFileName: string);
   public
     destructor Destroy; override;
+    function Save(const AOutFileName: string): Boolean; override;
     property Count: Integer read GetCount;
     property FileNames[Index: Integer]: string read GetFileNames;
 
     function Exec(PrintMsg: TPrintProc): Boolean; override;
+
   end;
 
   TMergeSrv = class
@@ -85,7 +99,6 @@ type
     procedure PrintLog;
     procedure PrintMsg(const Afmt: string; const Args: array of const); overload;
     procedure PrintMsg(const AVal: string); overload;
-    function  SaveResMap(ASource: TBitmap): Boolean;
     procedure DoOnAddLog(const AMsg: string);
   public
     constructor Create;
@@ -133,7 +146,7 @@ begin
         PrintMsg('Start %s', [FDataFile.FileName]);
         //PrintMsg('_______________________________________');
         if cConvert.Exec(PrintMsg) then
-          if SaveResMap(cConvert.FIconMap) then
+          if cConvert.Save(FDataFile.OutFileName) then
           begin
             PrintMsg('_______________________________________');
             PrintMsg(format('Finish: %s',[ChangeFileExt(FDataFile.OutFileName, '.IconPack')]));
@@ -173,41 +186,6 @@ begin
   Writeln(AVal);
 end;
 
-function TMergeSrv.SaveResMap(ASource: TBitmap): Boolean;
-var
-  cData: TMemoryStream;
-  cPack: TZCompressionStream;
-begin
-  Result := False;
-  if ASource = nil then
-    Exit;
-  if not DirectoryExists(ExtractFilePath(FDataFile.OutFileName)) then
-    if not CreateDir(ExtractFilePath(FDataFile.OutFileName)) then
-      Exit;
-
-  // 把资源压缩到内存流中
-  cData := TMemoryStream.Create;
-  try
-    // 生成一份对照Bitmap文件，用户检测合并文件是否有问题。
-    ASource.SaveToStream(cData);
-    cData.SaveToFile(FDataFile.OutFileName);
-    cData.Clear;
-
-    // 生成资源使用的压缩包文件
-    cPack := TZCompressionStream.Create(clMax, cData);
-    try
-      ASource.SaveToStream(cPack);
-    finally
-      cPack.free;
-    end;
-    cData.SaveToFile(ChangeFileExt(FDataFile.OutFileName, '.IconPack'));
-
-  finally
-    cData.Free;
-  end;
-  Result := True;
-end;
-
 function TParams.ReadFileName: Boolean;
 var
   sFileName: string;
@@ -215,24 +193,19 @@ var
 begin
   FileName := '';
 
-  // 从参数读取资源图标维护列表
   sFileName := ChangeFileExt(ParamStr(0), '.lst');
   if ParamCount >= 1 then
     sFileName := Trim(ParamStr(1));
   if FileExists(sFileName) then
     FileName := sFileName;
 
-  // 从第二个参数中读取需要输出的资源包名称
-  // 情景：1、没有第二个参数，默认使用配置文件名
-  //       2、第二个参数是个路径，作为输出路径，文件名同配置名。
-  //       3、有明确输出文件名，直接使用。
   OutFileName := ChangeFileExt(FileName, '.bmp');
   if ParamCount >= 2 then
   begin
     sFileName := Trim(ParamStr(2));
     if (sFileName <> '') then
     begin
-      if (sFileName[Length(sFileName)] = '\') then 
+      if (sFileName[Length(sFileName)] = '\') then
         OutFileName := Format('%s%s',[sFileName, ExtractFileName(OutFileName)])
       else
       begin
@@ -244,11 +217,10 @@ begin
     end;
   end;
 
-  // 把输出文件变成完整路径，为简化后续PNG资源的加载
   if OutFileName <> '' then
     OutFileName := ExpandFileName(OutFileName);
 
-  /// 设置当前处理目录，为简化后续图标资源的加载
+  /// 设置当前处理目录
   if FileName <> '' then
   begin
     sPath := ExtractFilePath(FileName);
@@ -256,7 +228,6 @@ begin
     FileName := ExtractFileName(FileName);
   end;
 
-  // 
   if SameText(ExtractFileExt(FileName), '.lst') then
     Kind := dtIconMerge
   else
@@ -270,7 +241,7 @@ var
   bExists: Boolean;
   I: Integer;
 begin
-  // 预读图标文件尺寸
+  // 预读文件尺寸
   FIcon := TPngImage.Create;
   bExists := False;
   for I := 0 to Count - 1 do
@@ -283,7 +254,6 @@ begin
   if not bExists then
     Exit;
 
-  // 设置图标拼接行列数
   FColCnt := 10;
   FRowCnt := Count div FColCnt;
   if Count mod FColCnt > 0 then
@@ -297,9 +267,51 @@ end;
 
 destructor TMergeIcons.Destroy;
 begin
-  if FFiles <> nil then FFiles.Free;
   if FIcon <> nil then  FIcon.free;
   inherited;
+end;
+
+procedure TMergeIcons.BuildIconsID;
+
+  function ExtractName(s: string): string;
+  var
+    i: Integer;
+  begin
+    s := ExtractFileName(s);
+    i := Pos('.', s);
+    if i > 0 then
+      delete(s, i, Length(s));
+
+    for I := 1 to Length(s) do
+      if s[i] = ' ' then
+        s[i] := '_';
+
+    Result := s;
+  end;
+var
+  I: Integer;
+  iSameCnt: Integer;
+  iSearch: Integer;
+  sID: string;
+begin
+  if Count = 0 then
+    Exit;
+
+  for I := 0 to count - 1 do
+    FSource[I].ID := 'IDI_' + ExtractName(FSource[i].name);
+
+  for iSearch := 0 to count - 2 do
+  begin
+    iSameCnt := 0;
+    for I := iSearch + 1 to count - 1 do
+      if SameText(FSource[i].ID, FSource[iSearch].ID) then
+      begin
+        inc(iSameCnt);
+        FSource[i].ID := format('%s_%d', [FSource[i].ID, iSameCnt]);
+        FSource[i].comment := format('%s 图标被重复定义，和%d名称相同', [FSource[i].comment, iSearch]);
+      end;
+  end;
+
 end;
 
 function TMergeIcons.Exec(PrintMsg: TPrintProc): Boolean;
@@ -325,11 +337,14 @@ begin
         PrintMsg(format('Err: 无法加载 (%d)%s 文件', [i, FileNames[i]]));
         AddLog(format('Err: 无法加载 (%d)%s 文件', [i, FileNames[i]]));
         inc(iErrCnt);
+        FSource[i].comment := '空图标';
       end;
     end;
 
     if iErrCnt > 0 then
       AddLog(format('合并：%d ,%d 个文件无法正常合并', [Count, iErrCnt]));
+
+    BuildIconsID;
 
     Result := True;
   end
@@ -339,12 +354,12 @@ end;
 
 function TMergeIcons.GetCount: Integer;
 begin
-  Result := FFiles.Count;
+  Result := FSourceCount;
 end;
 
 function TMergeIcons.GetFileNames(Index: Integer): string;
 begin
-  Result := FFiles[Index];
+  Result := FSource[Index].name;
 end;
 
 function TMergeIcons.LoadIcon(AIndex: Integer): Boolean;
@@ -369,12 +384,16 @@ var
   iCommentPos: Integer;
   idx: Integer;
 begin
-  if not Assigned(FFiles) then
-    FFiles := TStringList.Create;
+//  if not Assigned(FFiles) then
+//    FFiles := TStringList.Create;
+  FSourceCount := 0;
 
   cDatas := TStringList.Create;
   try
     cDatas.LoadFromFile(SourceFile);
+
+    SetLength(FSource, cDatas.Count);
+
     for I := 0 to cDatas.Count - 1 do
     begin
       sVal := Trim(cDatas[i]);
@@ -392,21 +411,27 @@ begin
             iCommentPos := idx;
             Break;
           end;
-      if iCommentPos > 0 then
-      begin
-        while (iCommentPos - 1 > 0) and (sVal[iCommentPos - 1] = ' ') do
-          dec(iCommentPos);
-        Delete(sVal, iCommentPos, Length(sVal));
-      end;
 
-      if sVal <> '' then
-        FFiles.Add(sVal);
+      if (sVal <> '') and (iCommentPos <> 1) then
+      begin
+        if iCommentPos = 0 then
+        begin
+          FSource[FSourceCount].name := sVal;
+          FSource[FSourceCount].comment := '';
+        end
+        else
+        begin
+          FSource[FSourceCount].name := Trim(Copy(sval, 1, iCommentPos - 1));
+          FSource[FSourceCount].comment := Trim(Copy(sVal, iCommentPos+1, length(sVal)));
+        end;
+        inc(FSourceCount);
+      end;
     end;
 
   finally
     cDatas.Free;
   end;
-  Result := FFiles.Count > 0;
+  Result := FSourceCount > 0;
 end;
 
 function TMergeIcons.MergeIcon(AIndex: Integer): Boolean;
@@ -415,10 +440,45 @@ var
   iRow: Integer;
 begin
   Result := True;
-  // 按照索引进行偏移并入
   iRow := AIndex div FColCnt;
   iCol := AIndex mod FColCnt;
+
   FIconMap.Canvas.Draw(FWidth * iCol, FHeight * iRow, FIcon);
+end;
+
+function TMergeIcons.Save(const AOutFileName: string): Boolean;
+begin
+  Result := inherited Save(AOutFileName);
+  if Result then
+    SaveResIconIndexDefine(ChangeFileExt(AOutFileName, '.inc'));
+end;
+
+procedure TMergeIcons.SaveResIconIndexDefine(const AFileName: string);
+var
+  cIDList: TStringList;
+  I: Integer;
+  sVal: string;
+begin
+  if Count = 0 then
+    Exit;
+
+  cIDList := TStringList.Create;
+  cIDList.Capacity := count + 5;
+  cIDList.Add('//');
+  cIDList.Add('// 由'+FParams.FileName+'文件生成，请不要手动修改。');
+  cIDlist.add('// create: ' + DateToStr(now));
+  cIDList.Add('//');
+  cIDList.Add('');
+  for I := 0 to count - 1 do
+  begin
+    sVal := format('  %-40s = %d;', [FSource[i].ID, i]) ;
+    if FSource[i].comment <> '' then
+      sVal := Format('%-60s // %s', [sVal, FSource[i].comment]);
+    cIDList.Add(sVal);
+  end;
+
+  cIDList.SaveToFile(AFileName);
+  cIDList.Free;
 end;
 
 var
@@ -479,6 +539,43 @@ end;
 function TConvertRes.GetSourceFile: string;
 begin
   Result := FParams.FileName;
+end;
+
+function TConvertRes.Save(const AOutFileName: string): Boolean;
+var
+  cData: TMemoryStream;
+  cPack: TZCompressionStream;
+  ASource : TBitmap;
+begin
+  ASource := FIconMap;
+  Result := False;
+  if ASource = nil then
+    Exit;
+
+  if not DirectoryExists(ExtractFilePath(AOutFileName)) then
+    if not CreateDir(ExtractFilePath(AOutFileName)) then
+      Exit;
+
+
+  cData := TMemoryStream.Create;
+  try
+    ASource.SaveToStream(cData);
+
+    cData.SaveToFile(AOutFileName);
+    cData.Clear;
+
+    cPack := TZCompressionStream.Create(clMax, cData);
+    try
+      ASource.SaveToStream(cPack);
+    finally
+      cPack.free;
+    end;
+    cData.SaveToFile(ChangeFileExt(AOutFileName, '.IconPack'));
+
+  finally
+    cData.Free;
+  end;
+  Result := True;
 end;
 
 begin
