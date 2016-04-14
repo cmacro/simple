@@ -4,9 +4,9 @@
 
 ## 内容包括
 
-* 标题工具条**TestCaptionToolbar**
-* 资源合并工具**MergeIconsRes**
-* 简易工具条**AnimateToolbar**
+* (**delphi**)标题工具条**TestCaptionToolbar**  
+* (**delphi**)资源合并工具**MergeIconsRes**
+* (**delphi**)简易工具条**AnimateToolbar**
 
 以上代码使用XE3进行调试编译。
 
