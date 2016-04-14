@@ -22,3 +22,11 @@
             降低资源DLL的尺寸
 
 - ** test **
+
+
+### testscrollcalc
+
+> gdi_win\testscrollcalc
+
+滚动条测试
+
