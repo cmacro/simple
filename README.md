@@ -26,7 +26,7 @@
 
 ### testscrollcalc
 
-> gdi_win\testscrollcalc
+> **dir:** gdi_win\testscrollcalc
 
 滚动条测试
 
