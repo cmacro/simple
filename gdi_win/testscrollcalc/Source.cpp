@@ -221,6 +221,8 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     static SCROLLINFO  si;  // 用于保存滚动条信息
     
 
+
+
     //
     // 滚动条设置消息
     //  SBM_SETSCROLLINFO SBM_GETSCROLLINFO 消息参数
