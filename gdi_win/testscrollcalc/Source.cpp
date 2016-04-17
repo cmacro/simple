@@ -1,11 +1,18 @@
-
+//
+// 自定义滚动态测试
+// 
+// Created by 蘑菇房 moguf.com
+//
 #include <windows.h>
-#include "strsafe.h" // how to scroll text
+#include "strsafe.h" // how to scroll text （MyTextWindowProc）
 
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK scrollWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK MyBitmapWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);           // 主窗体消息处理
+LRESULT CALLBACK scrollWndProc(HWND, UINT, WPARAM, LPARAM);     // 滚动条消息处理
+
+// microsoft demo
 LRESULT CALLBACK MyTextWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK MyBitmapWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -17,7 +24,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     WNDCLASS     wndclass;
 
     wndclass.style         = CS_HREDRAW | CS_VREDRAW;
-    wndclass.lpfnWndProc   = MyTextWindowProc; // MyBitmapWindowProc; // WndProc;
+    wndclass.lpfnWndProc   = WndProc;// MyTextWindowProc; // MyBitmapWindowProc;
     wndclass.cbClsExtra    = 0;
     wndclass.cbWndExtra    = 0;
     wndclass.hInstance     = hInstance;
@@ -31,17 +38,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 0;
 
     // scroll class
+    wndclass.style = 0;
     wndclass.lpfnWndProc   = scrollWndProc;
     wndclass.lpszClassName = TEXT("myscroll");
-    wndclass.hbrBackground = (HBRUSH)GetStockObject(GRAY_BRUSH);
+    wndclass.hbrBackground = 0;
     if (!RegisterClass(&wndclass))
         return 0;
 
-
     hwnd = CreateWindow(szAppName, TEXT("测试滚动条"),
                         WS_OVERLAPPEDWINDOW | WS_VSCROLL,
-                        200, 200,
-                        600, 500,
+                        600, 400, 350, 250,
                         NULL, NULL, hInstance, NULL);
 
     ShowWindow(hwnd, iCmdShow);
@@ -52,69 +58,72 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    return msg.wParam;
+    return (int)msg.wParam;
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static HWND hwndScroll;
-    static int  cxChar, cxCaps, cyChar, cxClient, cyClient;
+    static HWND hScroll;
+    static int  rowCount, rowHeight, xClient, yClient;
     HDC         hdc;
-    int         i, x, y, iVertPos, iPaintBeg, iPaintEnd;
+    int         i, y, vertPos, printBeg, printEnd;
     PAINTSTRUCT ps;
     SCROLLINFO  si;
     TCHAR       szBuffer[100];
     TEXTMETRIC  tm;
-    static      int rowCount;
+    RECT        r;
 
     switch (message)
     {
     case WM_CREATE:
 
-        hdc = GetDC(hwnd);
-
         // 测试当前数据行数，用于测试滚动量
-        rowCount = 100000;  
+        rowCount = 10;
 
+        // 获取一行高度
+        hdc = GetDC(hwnd);
         GetTextMetrics(hdc, &tm);
-        cxChar = tm.tmAveCharWidth;
-        cxCaps = (tm.tmPitchAndFamily & 1 ? 3 : 2) * cxChar / 2;
-        cyChar = tm.tmHeight + tm.tmExternalLeading;
+        rowHeight = tm.tmHeight + tm.tmExternalLeading;
         ReleaseDC(hwnd, hdc);
 
-        hwndScroll = CreateWindow(TEXT("myscroll"), TEXT("myscroll"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
-                                  350, 10, 20, 480,
+        hScroll = CreateWindow(TEXT("myscroll"), TEXT("myscroll"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+                                  300, 10, 20, 300,
                                   hwnd, 0, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 
        
         return 0;
 
     case WM_SIZE:
-        cxClient = LOWORD(lParam);
-        cyClient = HIWORD(lParam);
+        xClient = LOWORD(lParam);
+        yClient = HIWORD(lParam);
 
-        MoveWindow(hwndScroll, 350, 10, 20, cyClient - 20, true);
 
         // 设置滚动条
 
         si.cbSize = sizeof(si);
         si.fMask  = SIF_RANGE | SIF_PAGE;
         si.nMin   = 0;
-        si.nMax   = rowCount - 1 + cyClient / cyChar - 1;
-        si.nPage  = cyClient / cyChar;
+        //
+        // 只要超过1行就能滚动，因此需要多加一页的行数。
+        si.nMax   = rowCount - 1 + yClient / rowHeight - 1;
+        si.nPage  = yClient / rowHeight;
         SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-        SetScrollInfo(hwndScroll, SB_VERT, &si, TRUE);
+
+        // 修正滚动条位置
+        MoveWindow(hScroll, xClient - 100, 10 , 20, yClient - 20, true);
+        SendMessage(hScroll, SBM_SETSCROLLINFO, TRUE, (LPARAM)(&si));
 
         return 0;
 
     case WM_VSCROLL:
+
         // 获取竖滚动条状态
         si.cbSize = sizeof(si);
         si.fMask  = SIF_ALL;
         GetScrollInfo(hwnd, SB_VERT, &si);
 
         // 保存原来的位置，用于计算滚动当前画布量
-        iVertPos = si.nPos;
+        vertPos = si.nPos;
 
         // 设置滚动量
         switch (LOWORD(wParam))
@@ -135,13 +144,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         GetScrollInfo(hwnd, SB_VERT, &si);
 
         // 滚动界面画布
-        if (si.nPos != iVertPos) {
-            ScrollWindow(hwnd, 0, cyChar * (iVertPos - si.nPos), NULL, NULL);
-            UpdateWindow(hwnd);
-        }
+        if (si.nPos != vertPos) {
+            GetClientRect(hwnd, &r);
+            r.right -= 150; // 不要刷到滚动条位置，否则会闪
 
-        MoveWindow(hwndScroll, 350, 10, 20, cyClient - 20, true);
-        PostMessage(hwndScroll, message, wParam, lParam);
+            hdc = GetDC(hwnd);
+            ScrollDC(hdc, 0, rowHeight * (vertPos - si.nPos), &r, NULL, NULL, NULL);
+            ReleaseDC(hwnd, hdc);
+
+            if (rowHeight * (vertPos - si.nPos) < 0 ) r.top = r.bottom + rowHeight * (vertPos - si.nPos);
+            else r.bottom = r.top + rowHeight * (vertPos - si.nPos);
+            InvalidateRect(hwnd, &r, false);
+        }
+        wsprintf(szBuffer, TEXT("nPos:%3d    nTrackPos:%3d"), si.nPos, si.nTrackPos);
+        SetWindowText(hwnd, szBuffer);
+
+        // 通知自定义滚动条滚动
+        SendMessage(hScroll, SBM_SETSCROLLINFO, TRUE, (LPARAM)(&si));
 
         return 0;
 
@@ -152,24 +171,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         si.cbSize = sizeof(si);
         si.fMask  = SIF_ALL;
         GetScrollInfo(hwnd, SB_VERT, &si);
-        iVertPos = si.nPos;
+        vertPos = si.nPos;
 
         // 重绘修改的位置（减少重绘量）
-        iPaintBeg = max(0, iVertPos + ps.rcPaint.top / cyChar);
-        iPaintEnd = min(rowCount - 1, iVertPos + ps.rcPaint.bottom / cyChar);
-
-        SetTextAlign(hdc, TA_LEFT);
-        for (i = iPaintBeg; i <= iPaintEnd; i++)
+        printBeg = max(0, vertPos + ps.rcPaint.top / rowHeight);
+        printEnd = min(rowCount - 1, vertPos + ps.rcPaint.bottom / rowHeight);
+        // 输出当前行号
+        for (i = printBeg; i <= printEnd; i++)
         {
-            y = cyChar * (i - iVertPos);
-            TextOut(hdc, 22 , y, szBuffer, wsprintf(szBuffer, TEXT("%5d"), i));
+            y = rowHeight * (i - vertPos);
+            TextOut(hdc, 22 , y, szBuffer, wsprintf(szBuffer, TEXT("%5d   "), i+1));
         }
 
+        // 填充空白区域
+        y = rowHeight * (printEnd + 1 - vertPos);
+        if (ps.rcPaint.bottom - y > 0) {
+            r = ps.rcPaint;
+            r.top = y;
+            ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &r, 0, 0, 0);
+        }
         EndPaint(hwnd, &ps);
-
-        wsprintf(szBuffer, TEXT("nPos:%5d    nTrackPos:%5d"), si.nPos, si.nTrackPos);
-        SetWindowText(hwnd, szBuffer);
-
 
         return 0;
 
@@ -181,18 +202,98 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
+static void mlCGFillColor(HDC hdc, RECT *r, unsigned int color)
+{
+    // 实际使用ExtTextOut要比FillRect填充颜色效果好，能减少绘制中闪烁问题。
+    SetBkColor(hdc, color);
+    ExtTextOut(hdc, 0, 0, ETO_OPAQUE, r, 0, 0, 0);
+}
 
 LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static SCROLLINFO  si;
+    HDC hdc;
+    PAINTSTRUCT ps;
+    SCROLLINFO *psrcsi;
+    RECT r;
 
-    switch (message)
-    {
-    default:
-        break;
+    float s;                // 滑块的尺寸
+    int v;                  // 滑块界面Top位置
+    static SCROLLINFO  si;  // 用于保存滚动条信息
+    
 
+    //
+    // 滚动条设置消息
+    //  SBM_SETSCROLLINFO SBM_GETSCROLLINFO 消息参数
+    //  wParam --- 是否要刷新 (SBM_GETSCROLLINFO 无用)
+    //  lParam --- *SCROLLINFO
+
+    switch (message) {
+    case SBM_SETSCROLLINFO:
+        if (!lParam)
+            return 0;
+
+        // 设置滚动条信息
+        psrcsi = (SCROLLINFO *)lParam;
+        if (psrcsi->fMask & SIF_RANGE) {    // 设置内容行数
+            si.nMax = psrcsi->nMax;
+            si.nMin = psrcsi->nMin;
+        }
+        if (psrcsi->fMask & SIF_PAGE)       // 每页能显示多少行
+            si.nPage = psrcsi->nPage;
+        if (psrcsi->fMask & SIF_POS)        // 行显示位置
+            si.nPos = psrcsi->nPos;
+
+        // wParam = true　刷新滚动区域
+        if (wParam) 
+            InvalidateRect(hwnd, NULL, false);
+
+        return 0;
+
+    case SBM_GETSCROLLINFO:
+        if (lParam)
+            *(SCROLLINFO *)lParam = si;
+
+        return 0;
+
+    case WM_PAINT:
+        hdc = BeginPaint(hwnd, &ps);
+
+        // 绘制背景色
+        GetClientRect(hwnd, &r);
+        mlCGFillColor(hdc, &r, 0xaaaaaa);
+
+        // 计算滑块大小
+        if (r.bottom - r.top > 30 && si.nMax && (si.nMax - si.nMin) >= (int)si.nPage) {
+
+            // 滑块计算
+            //   大小 = 滚动条高度 / 有效范围 * 每页数量
+            //   最小20, 内容比较多，降低用于鼠标定位到滚动条拖动的难度。
+            s = max((float)((r.bottom - r.top) / (si.nMax - si.nMin) * si.nPage), 20.0f);
+
+            // 实际滑动位置
+            //  = （滚动条高度 - 滑块尺寸） / （有效范围 - 每页数量 + 1） * 当前行位置
+            // 实际滚动的位置会比实际少一页的数量。
+            //
+            v = 0;
+            if (si.nPos > 0) 
+                v = (int)((r.bottom - r.top - s) / (float)(si.nMax - si.nMin + 1 - si.nPage)  * si.nPos);
+            // 由于精度问题，可能滑块位置会超界。超界就取最大值
+            if (v && v + (int)s > r.bottom) v = r.bottom - (int)s;
+
+            // 绘制滑块
+            r.left++;
+            r.right--;
+            r.top = v ;
+            r.bottom = r.top + (int)s;
+            mlCGFillColor(hdc, &r, 0x7a7a7a);
+            InflateRect(&r, -1, -1);
+            mlCGFillColor(hdc, &r, 0x9a9a9a);
+        }
+
+        EndPaint(hwnd, &ps);
+
+        return 0;
     }
-
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
@@ -791,7 +892,7 @@ LRESULT CALLBACK MyTextWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
             }
 
             // Write a line of text to the client area.
-            TextOut(hdc, x, y, abc[i], abcLength);
+            TextOut(hdc, x, y, abc[i], (int)abcLength);
         }
 
         // Indicate that painting is finished.
