@@ -11,8 +11,7 @@ c中简单实现非客户区的绘制。由于都是使用**windowsAPI**，因�
 
 大致的效果
 
-![最终结果演示](http://images.moguf.com/imgs/dev/winskin/0503.gif)
-
+![最终结果演示](http://www.moguf.com/imgs/dev/winskin/0503.gif)
 
 [具体看blog dev.moguf.com](http://dev.moguf.com/post/devwinskin05)
 
