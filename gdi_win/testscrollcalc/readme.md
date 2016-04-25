@@ -18,7 +18,7 @@
 
 **最终的效果：**
 
-![](http://images.moguf.com/imgs/dev/scrollcalc/01.gif)
+![](testscroll.gif)
 
 
 [详细内容 moguf.com](http://dev.moguf.com/post/testscrollcalc)
