@@ -110,7 +110,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="scrolltest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

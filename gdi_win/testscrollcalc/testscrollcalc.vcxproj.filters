@@ -7,11 +7,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <None Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="readme.md" />
+    <ClCompile Include="scrolltest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

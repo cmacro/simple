@@ -107,3 +107,7 @@ SetScrollInfo：
 74），si.nPage 等於 50。这意味著最大的滚动列位置限制为 74 - 50 + 1，即25。这正是我们想要的。
 当页面大小与滚动列范围一样大时，会发生什么情况呢？在这个例子中，就是 nPage 等於 75 或更大的情况。Windows 通常隐藏滚动列，因为它并不需要。
 如果不想隐藏滚动列，可在呼叫 SetScrollInfo 时使用 SIF_DISABLENOSCROLL，Windows 只是让那个滚动列不能被使用，而不隐藏它。
+
+
+[WM_VSCROLL]:https://msdn.microsoft.com/en-us/library/windows/desktop/bb787577(v=vs.85).aspx
+[SBM_SETSCROLLINFO]:https://msdn.microsoft.com/en-us/library/windows/desktop/bb787571(v=vs.85).aspx
