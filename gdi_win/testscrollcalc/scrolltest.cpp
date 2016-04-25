@@ -127,7 +127,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         vertPos = si.nPos;
 
         // lParam 参数为滚动条控件，标准滚动条没有这个参数
-        if (LOWORD(wParam) == SB_THUMBTRACK && lParam) 
+        if (lParam) 
             SendMessage(hScroll, SBM_GETSCROLLINFO, NULL, (LPARAM)(&si));
 
         // 设置滚动量
@@ -165,6 +165,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         // 通知自定义滚动条滚动
         SendMessage(hScroll, SBM_SETSCROLLINFO, TRUE, (LPARAM)(&si));
 
+        return 0;
+
+    case WM_MOUSEWHEEL:
+        // 消息发送到滚动条控件
+        PostMessage(hScroll, WM_MOUSEWHEEL, wParam, lParam);
         return 0;
 
     case WM_PAINT:
@@ -247,7 +252,7 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     SCROLLINFO *psrcsi;
     RECT r;
     HWND hParentWnd;
-    int yPos;
+
     TCHAR       szBuffer[100];
 
     float s;                // 滑块的尺寸
@@ -255,6 +260,8 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     static SCROLLINFO  si;  // 用于保存滚动条信息
     static int dragState;   // 拖拽状态
     static int height;      // 滚动区域高度
+
+    int iAccumDelta;
 
     //
     // 滚动条设置消息
@@ -334,6 +341,21 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             InvalidateRect(hwnd, NULL, false);
         }
         return 0;
+
+    case WM_MOUSEWHEEL:
+        // 鼠标滚动支持
+        iAccumDelta = (short)HIWORD(wParam) / 120;  // 滚动精度120一个单位
+        si.nTrackPos = si.nPos - iAccumDelta * 3;   // 每滚一次3行
+        if (si.nTrackPos < 0)
+            si.nTrackPos = 0;
+        else if (si.nTrackPos > (si.nMax - si.nMin + 1) - si.nPage)
+            si.nTrackPos = (si.nMax - si.nMin + 1) - si.nPage;
+
+        if (si.nPos != si.nTrackPos)
+            PostMessage(GetParent(hwnd), WM_VSCROLL, SB_THUMBTRACK, (LPARAM)hwnd);
+            
+        return 0;
+
 
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
