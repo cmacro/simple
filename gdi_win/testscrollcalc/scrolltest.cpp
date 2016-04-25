@@ -242,7 +242,7 @@ static int calcVertThumPos(int postion, SCROLLINFO *si, int s)
     //
     // 计算方法：
     //   位置 = （鼠标位置 - 半滑块尺寸） / 每象素滑动量
-    return (postion - thumsize / 2.0) / pxSize;
+    return (int)((postion - thumsize / 2.0) / pxSize);
 }
 
 LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -251,7 +251,6 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     PAINTSTRUCT ps;
     SCROLLINFO *psrcsi;
     RECT r;
-    HWND hParentWnd;
 
     TCHAR       szBuffer[100];
 
@@ -261,7 +260,7 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     static int dragState;   // 拖拽状态
     static int height;      // 滚动区域高度
 
-    int iAccumDelta;
+    int accumDelta;
 
     //
     // 滚动条设置消息
@@ -344,11 +343,11 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
 
     case WM_MOUSEWHEEL:
         // 鼠标滚动支持
-        iAccumDelta = (short)HIWORD(wParam) / 120;  // 滚动精度120一个单位
-        si.nTrackPos = si.nPos - iAccumDelta * 3;   // 每滚一次3行
+        accumDelta = GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA;  // 滚动精度120一个单位
+        si.nTrackPos = si.nPos - accumDelta * 3;   // 每滚一次3行
         if (si.nTrackPos < 0)
             si.nTrackPos = 0;
-        else if (si.nTrackPos > (si.nMax - si.nMin + 1) - si.nPage)
+        else if (si.nTrackPos > (int)((si.nMax - si.nMin + 1) - si.nPage))
             si.nTrackPos = (si.nMax - si.nMin + 1) - si.nPage;
 
         if (si.nPos != si.nTrackPos)
@@ -364,7 +363,7 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         GetClientRect(hwnd, &r);
         mlCGFillColor(hdc, &r, 0xcccccc);
 
-        // 计算滑块大小
+        // 计算滑块大小，过小时不绘制
         if (r.bottom - r.top > 30 && si.nMax && (si.nMax - si.nMin) >= (int)si.nPage) {
 
             // 滑块计算
@@ -380,7 +379,8 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             if (si.nPos > 0) 
                 v = (int)((r.bottom - r.top - s) / (float)(si.nMax - si.nMin + 1 - si.nPage)  * si.nPos);
             // 由于精度问题，可能滑块位置会超界。超界就取最大值
-            if (v && v + (int)s > r.bottom) v = r.bottom - (int)s;
+            if (v && v + (int)s > r.bottom) 
+                v = r.bottom - (int)s;
 
             // 绘制滑块
             r.left++;
