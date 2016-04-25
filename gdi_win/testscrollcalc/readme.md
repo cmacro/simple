@@ -111,3 +111,6 @@ SetScrollInfo：
 
 [WM_VSCROLL]:https://msdn.microsoft.com/en-us/library/windows/desktop/bb787577(v=vs.85).aspx
 [SBM_SETSCROLLINFO]:https://msdn.microsoft.com/en-us/library/windows/desktop/bb787571(v=vs.85).aspx
+[SetCapture]:https://msdn.microsoft.com/en-us/library/windows/desktop/ms646262(v=vs.85).aspx
+[WM_LBUTTONDOWN]:https://msdn.microsoft.com/en-us/library/windows/desktop/ms645607(v=vs.85).aspx
+[WM_MOUSEMOVE]:https://msdn.microsoft.com/en-us/library/windows/desktop/ms645616(v=vs.85).aspx

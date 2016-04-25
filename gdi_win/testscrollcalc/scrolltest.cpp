@@ -4,6 +4,8 @@
 // Created by 蘑菇房 moguf.com
 //
 #include <windows.h>
+#include <Winuser.h> // setScrollPos
+#include <Windowsx.h> // GET_Y_LPARAM
 #include "strsafe.h" // how to scroll text （MyTextWindowProc）
 
 
@@ -77,7 +79,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
 
         // 测试当前数据行数，用于测试滚动量
-        rowCount = 10;
+        rowCount = 100;
 
         // 获取一行高度
         hdc = GetDC(hwnd);
@@ -120,9 +122,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         si.cbSize = sizeof(si);
         si.fMask  = SIF_ALL;
         GetScrollInfo(hwnd, SB_VERT, &si);
-
+        
         // 保存原来的位置，用于计算滚动当前画布量
         vertPos = si.nPos;
+
+        // lParam 参数为滚动条控件，标准滚动条没有这个参数
+        if (LOWORD(wParam) == SB_THUMBTRACK && lParam) 
+            SendMessage(hScroll, SBM_GETSCROLLINFO, NULL, (LPARAM)(&si));
 
         // 设置滚动量
         switch (LOWORD(wParam))
@@ -155,12 +161,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
             else r.bottom = r.top + rowHeight * (vertPos - si.nPos);
             InvalidateRect(hwnd, &r, false);
         }
-        wsprintf(szBuffer, TEXT("nPos:%3d    nTrackPos:%3d"), si.nPos, si.nTrackPos);
-        SetWindowText(hwnd, szBuffer);
 
         // 通知自定义滚动条滚动
         SendMessage(hScroll, SBM_SETSCROLLINFO, TRUE, (LPARAM)(&si));
-        
 
         return 0;
 
@@ -209,23 +212,55 @@ static void mlCGFillColor(HDC hdc, RECT *r, unsigned int color)
     ExtTextOut(hdc, 0, 0, ETO_OPAQUE, r, 0, 0, 0);
 }
 
+// 计算滚动条位置
+static int calcVertThumPos(int postion, SCROLLINFO *si, int s)
+{
+    float thumsize;     // 滑块的大小
+    float pxSize;       // 每象素可滑动量
+    int   scrollCnt;    // 可滑动数量
+
+    // 滑块尺寸 =  滚动条高度 / 有效范围 * 每页数量
+    //            最小 20
+    thumsize = max((float)((s) / (si->nMax - si->nMin) * si->nPage), 20.0f);
+    if (postion <= (int)(thumsize / 2))
+        return 0;
+    if (postion >= s - (thumsize / 2))
+        return (si->nMax - si->nMin + 1) - si->nPage;
+
+    // 计算方法：
+    //  每象素滑动量 = 有效高度 / 可滑动数量
+    //  有效高度     = 总高度 - 滑块尺寸
+    //  可滑动数量   = 总量 - 每页数量
+    scrollCnt = (si->nMax - si->nMin + 1) - si->nPage;
+    pxSize = (float)(s - thumsize) / (float)scrollCnt;
+
+    //
+    // 计算方法：
+    //   位置 = （鼠标位置 - 半滑块尺寸） / 每象素滑动量
+    return (postion - thumsize / 2.0) / pxSize;
+}
+
 LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC hdc;
     PAINTSTRUCT ps;
     SCROLLINFO *psrcsi;
     RECT r;
+    HWND hParentWnd;
+    int yPos;
+    TCHAR       szBuffer[100];
 
     float s;                // 滑块的尺寸
     int v;                  // 滑块界面Top位置
     static SCROLLINFO  si;  // 用于保存滚动条信息
+    static int dragState;   // 拖拽状态
+    static int height;      // 滚动区域高度
 
     //
     // 滚动条设置消息
     //  SBM_SETSCROLLINFO SBM_GETSCROLLINFO 消息参数
     //  wParam --- 是否要刷新 (SBM_GETSCROLLINFO 无用)
     //  lParam --- *SCROLLINFO
-
     switch (message) {
     case SBM_SETSCROLLINFO:
         if (!lParam)
@@ -242,26 +277,70 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
         if (psrcsi->fMask & SIF_POS)        // 行显示位置
             si.nPos = psrcsi->nPos;
 
+        wsprintf(szBuffer, TEXT("yPos:%3d "), si.nPos);
+        SetWindowText(GetParent(hwnd), szBuffer);
+
         // wParam = true　刷新滚动区域
         if (wParam) 
             InvalidateRect(hwnd, NULL, false);
-
         return 0;
 
     case SBM_GETSCROLLINFO:
+        //这里简单处理，应该和SBM_SETSCROLLINFO一样判断获取的信息。
         if (lParam)
-            *(SCROLLINFO *)lParam = si;
-
+            *(SCROLLINFO *)lParam = si;     
         return 0;
 
-        case WM_
+    case WM_SIZE:
+        height = HIWORD(lParam);
+        break;
+
+    case WM_LBUTTONDOWN:
+        si.nTrackPos = calcVertThumPos(GET_Y_LPARAM(lParam), &si, height);
+        if (si.nPos != si.nTrackPos) 
+            PostMessage(GetParent(hwnd), WM_VSCROLL, SB_THUMBTRACK, (LPARAM)hwnd);
+        dragState = 1; // 准备拖动滚动条
+        InvalidateRect(hwnd, NULL, false);
+        return 0;
+    
+    case WM_MOUSEMOVE:
+        if (dragState == 1) {
+            // 有拖拽准备，锁定鼠标鼠标
+            SetCapture(hwnd);
+            dragState = 2;
+            
+        }
+        else if (dragState == 2) {
+            if (!(wParam & MK_LBUTTON)) {
+                dragState = 0;              // 防止中间中断，导致出现无效拖拽
+                if (GetCapture() == hwnd)
+                    ReleaseCapture();
+            }
+            else {
+                // 在锁定状态下拖动滚动条定位。
+                si.nTrackPos = calcVertThumPos(GET_Y_LPARAM(lParam), &si, height);
+                if (si.nTrackPos != si.nPos)
+                    PostMessage(GetParent(hwnd), WM_VSCROLL, SB_THUMBTRACK, (LPARAM)hwnd);
+            }
+        }
+        return 0;
+
+    case WM_LBUTTONUP:
+        if (dragState == 2) 
+            ReleaseCapture();   // 释放鼠标锁定
+
+        if (dragState) {
+            dragState = 0;          // 清除状态
+            InvalidateRect(hwnd, NULL, false);
+        }
+        return 0;
 
     case WM_PAINT:
         hdc = BeginPaint(hwnd, &ps);
 
         // 绘制背景色
         GetClientRect(hwnd, &r);
-        mlCGFillColor(hdc, &r, 0xaaaaaa);
+        mlCGFillColor(hdc, &r, 0xcccccc);
 
         // 计算滑块大小
         if (r.bottom - r.top > 30 && si.nMax && (si.nMax - si.nMin) >= (int)si.nPage) {
@@ -286,9 +365,11 @@ LRESULT CALLBACK scrollWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             r.right--;
             r.top = v ;
             r.bottom = r.top + (int)s;
-            mlCGFillColor(hdc, &r, 0x7a7a7a);
+            
+            // 拖拽时滑块颜色反一下
+            mlCGFillColor(hdc, &r, dragState ? 0x999999 : 0x666666e);
             InflateRect(&r, -1, -1);
-            mlCGFillColor(hdc, &r, 0x9a9a9a);
+            mlCGFillColor(hdc, &r, dragState ? 0x666666e : 0x999999);
         }
 
         EndPaint(hwnd, &ps);
