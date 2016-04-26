@@ -1,0 +1,199 @@
+
+sudo cp /etc/apt/sources.list /etc/apt/sources.list_bak #备份一下软件源
+sudo vi /etc/apt/sources.list
+
+加入如下内容即可
+
+
+# 网易163更新服务器：
+deb http://mirrors.163.com/debian/ squeeze main non-free contrib
+deb http://mirrors.163.com/debian/ squeeze-proposed-updates main non-free contrib
+deb-src http://mirrors.163.com/debian/ squeeze main non-free contrib
+deb-src http://mirrors.163.com/debian/ squeeze-proposed-updates main non-free contrib
+
+# sohu 更新服务器：
+deb http://mirrors.sohu.com/debian/ lenny main non-free contrib
+deb http://mirrors.sohu.com/debian/ lenny-proposed-updates main non-free contrib
+deb-src http://mirrors.sohu.com/debian/ lenny main non-free contrib
+deb-src http://mirrors.sohu.com/debian/ lenny-proposed-updates main non-free contrib
+
+
+
+open the setting file: /etc/apt/sources.list
+
+add the follow code:
+
+[plain] view plain copy 在CODE上查看代码片派生到我的代码片
+deb http://http.debian.net/debian wheezy main contrib non-free  
+deb http://mirrors.163.com/debian wheezy main contrib non-free   
+deb http://mirrors.ustc.edu.cn/debian wheezy main contrib non-free  
+  
+#testing package sources, emacs24 is in it.  
+#deb http://mirrors.163.com/debian testing main   
+
+'#' is for comment,
+every time you changed the file  /etc/apt/sources.list, you should run:
+
+[plain] view plain copy 在CODE上查看代码片派生到我的代码片
+sudo apt-get update  
+
+
+[debian source list 地址更新说明]
+
+http://www.cnblogs.com/beanmoon/p/3387652.html
+
+deb http://mirrors.163.com/debian/ wheezy main non-free contrib
+deb http://mirrors.163.com/debian/ wheezy-proposed-updates main non-free contrib
+deb-src http://mirrors.163.com/debian/ wheezy main non-free contrib
+deb-src http://mirrors.163.com/debian/ wheezy-proposed-updates main non-free contrib
+
+
+
+django 创建工程
+-----
+
+安装 
+apt-get install python-django -y
+
+查找当前python版本的库目录
+python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
+
+映射django-admin 到 /usr/local/bin 目录
+ln -s /usr/lib/python2.7/dist-packages/django/bin/django-admin.py /usr/local/bin
+
+权限问题：
+chmod 777 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py
+
+
+创建mysite 站点
+django-admin.py startproject mysite
+cd mysite
+
+同步
+python manage.py migrate
+
+运行站点
+python manage.py runserver 8002
+or
+python manage.py runserver 0.0.0.0:8002
+
+
+OK
+
+
+uwsgi 安装
+-----
+apt-get install uwsgi -y
+
+
+创建测试文件
+Create a file called test.py:
+
+# test.py
+def application(env, start_response):
+    start_response('200 OK', [('Content-Type','text/html')])
+    return [b"Hello World"] # python3
+    #return ["Hello World"] # python2
+
+
+
+
+
+安装 python 3.5.1
+-----------
+Debian 7 自带的python是2.7.3,要用最新的3.4版本怎么办？我们从官网下载压缩包自己编译。
+
+一、安装编译用的包
+
+1 $ sudo apt-get install build-essential
+2 $ sudo apt-get install libncurses5-dev libncursesw5-dev libreadline6-dev
+3 $ sudo apt-get install libdb5.1-dev libgdbm-dev libsqlite3-dev libssl-dev
+4 $ sudo apt-get install libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev
+二、下载压缩包
+
+wget -c https://www.python.org/ftp/python/3.4.1/Python-3.4.1.tgz
+三、编译安装
+
+复制代码
+1 $ cd download/
+2 $ tar -zxf Python-3.4.1.tgz
+3 $ cd Python-3.4.1
+4 $ ./configure --prefix=/opt/python-3.4.1
+5 $ make
+6 $ sudo make install
+7 $ cd download/
+8 $ sudo rm -rf Python-3.4.1 #删除解压目录
+复制代码
+安装好后把 python3 添加到PATH里，打开~/.bashrc 文件，在最后添加：
+
+export PATH=$PATH:/opt/python-3.4.1/bin
+保存后：
+
+source .bashrc
+在终端里输入 python3,可以看到现在的版本是3.4.1。
+
+$ python3
+Python 3.4.1 (default, Aug 11 2014, 01:23:53) 
+[GCC 4.6.3] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> 
+ 
+
+ 
+
+2015.01.09 更新：
+
+在make时出现这个提示：
+
+复制代码
+# Substitution happens here, as the completely-expanded BINDIR
+# is not available in configure
+sed -e "s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m," < ./Misc/python-config.in >python-config.py
+# Replace makefile compat. variable references with shell script compat. ones; ->
+sed -e 's,\$(\([A-Za-z0-9_]*\)),\$\{\1\},g' < Misc/python-config.sh >python-config
+# On Darwin, always use the python version of the script, the shell
+# version doesn't use the compiler customizations that are provided
+# in python (_osx_support.py).
+if test `uname -s` = Darwin; then \
+cp python-config.py python-config; \
+fi
+复制代码
+按提示操作：
+
+$ sed -e "s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m," < ./Misc/python-config.in >python-config.py
+$ sed -e 's,\$(\([A-Za-z0-9_]*\)),\$\{\1\},g' < Misc/python-config.sh >python-config
+再make：
+
+$ make
+最后：
+
+sudo make install
+ 
+
+在编译安装python3.4.2时有这个提示：
+
+INFO: Can't locate Tcl/Tk libs and/or headers
+
+Python build finished successfully!
+The necessary bits to build these optional modules were not found:
+_tkinter                                                       
+To find the necessary bits, look in setup.py in detect_modules() for the module's name.
+解决办法：
+
+sudo apt-get install python-tk tcl tk tcl-dev tk-dev 
+ 
+
+
+
+
+
+
+相关问题：
+----
+
+    wget 下载时出现 Wget error: ERROR: The certificate of is not trusted. 
+    解决方法：安装 ca-certificates 包
+    $ sudo apt-get install ca-certificates
+
+    2 使用 --no-check-certificate 参数下载
+    如 # wget --no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz

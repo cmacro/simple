@@ -1,0 +1,1228 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>body {
+  width: 45em;
+  border: 1px solid #ddd;
+  outline: 1300px solid #fff;
+  margin: 16px auto;
+}
+
+body .markdown-body
+{
+  padding: 30px;
+}
+
+@font-face {
+  font-family: fontawesome-mini;
+  src: url(data:font/woff;charset=utf-8;base64,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) format('woff');
+}
+
+@font-face {
+  font-family: octicons-anchor;
+  src: url(data:font/woff;charset=utf-8;base64,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) format('woff');
+}
+
+.markdown-body {
+  font-family: sans-serif;
+  -ms-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  color: #333333;
+  overflow: hidden;
+  font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.markdown-body a {
+  background: transparent;
+}
+
+.markdown-body a:active,
+.markdown-body a:hover {
+  outline: 0;
+}
+
+.markdown-body b,
+.markdown-body strong {
+  font-weight: bold;
+}
+
+.markdown-body mark {
+  background: #ff0;
+  color: #000;
+  font-style: italic;
+  font-weight: bold;
+}
+
+.markdown-body sub,
+.markdown-body sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+.markdown-body sup {
+  top: -0.5em;
+}
+.markdown-body sub {
+  bottom: -0.25em;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+.markdown-body img {
+  border: 0;
+}
+
+.markdown-body hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  height: 0;
+}
+
+.markdown-body pre {
+  overflow: auto;
+}
+
+.markdown-body code,
+.markdown-body kbd,
+.markdown-body pre,
+.markdown-body samp {
+  font-family: monospace, monospace;
+  font-size: 1em;
+}
+
+.markdown-body input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+
+.markdown-body html input[disabled] {
+  cursor: default;
+}
+
+.markdown-body input {
+  line-height: normal;
+}
+
+.markdown-body input[type="checkbox"] {
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.markdown-body td,
+.markdown-body th {
+  padding: 0;
+}
+
+.markdown-body .codehilitetable {
+  border: 0;
+  border-spacing: 0;
+}
+
+.markdown-body .codehilitetable tr {
+  border: 0;
+}
+
+.markdown-body .codehilitetable pre,
+.markdown-body .codehilitetable div.codehilite {
+  margin: 0;
+}
+
+.markdown-body .linenos,
+.markdown-body .code,
+.markdown-body .codehilitetable td {
+  border: 0;
+  padding: 0;
+}
+
+.markdown-body td:not(.linenos) .linenodiv {
+  padding: 0 !important;
+}
+
+.markdown-body .code {
+  width: 100%;
+}
+
+.markdown-body .linenos div pre,
+.markdown-body .linenodiv pre,
+.markdown-body .linenodiv {
+  border: 0;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  -webkit-border-top-left-radius: 3px;
+  -webkit-border-bottom-left-radius: 3px;
+  -moz-border-radius-topleft: 3px;
+  -moz-border-radius-bottomleft: 3px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.markdown-body .code div pre,
+.markdown-body .code div {
+  border: 0;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  -webkit-border-top-right-radius: 3px;
+  -webkit-border-bottom-right-radius: 3px;
+  -moz-border-radius-topright: 3px;
+  -moz-border-radius-bottomright: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.markdown-body * {
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.markdown-body input {
+  font: 13px Helvetica, arial, freesans, clean, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  line-height: 1.4;
+}
+
+.markdown-body a {
+  color: #4183c4;
+  text-decoration: none;
+}
+
+.markdown-body a:hover,
+.markdown-body a:focus,
+.markdown-body a:active {
+  text-decoration: underline;
+}
+
+.markdown-body hr {
+  height: 0;
+  margin: 15px 0;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.markdown-body hr:before,
+.markdown-body hr:after {
+  display: table;
+  content: " ";
+}
+
+.markdown-body hr:after {
+  clear: both;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  line-height: 1.1;
+}
+
+.markdown-body h1 {
+  font-size: 30px;
+}
+
+.markdown-body h2 {
+  font-size: 21px;
+}
+
+.markdown-body h3 {
+  font-size: 16px;
+}
+
+.markdown-body h4 {
+  font-size: 14px;
+}
+
+.markdown-body h5 {
+  font-size: 12px;
+}
+
+.markdown-body h6 {
+  font-size: 11px;
+}
+
+.markdown-body blockquote {
+  margin: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.markdown-body ol ol,
+.markdown-body ul ol {
+  list-style-type: lower-roman;
+}
+
+.markdown-body ul ul ol,
+.markdown-body ul ol ol,
+.markdown-body ol ul ol,
+.markdown-body ol ol ol {
+  list-style-type: lower-alpha;
+}
+
+.markdown-body dd {
+  margin-left: 0;
+}
+
+.markdown-body code,
+.markdown-body pre,
+.markdown-body samp {
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-size: 12px;
+}
+
+.markdown-body pre {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.markdown-body kbd {
+  background-color: #e7e7e7;
+  background-image: -moz-linear-gradient(#fefefe, #e7e7e7);
+  background-image: -webkit-linear-gradient(#fefefe, #e7e7e7);
+  background-image: linear-gradient(#fefefe, #e7e7e7);
+  background-repeat: repeat-x;
+  border-radius: 2px;
+  border: 1px solid #cfcfcf;
+  color: #000;
+  padding: 3px 5px;
+  line-height: 10px;
+  font: 11px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  display: inline-block;
+}
+
+.markdown-body>*:first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-body>*:last-child {
+  margin-bottom: 0 !important;
+}
+
+.markdown-body .headeranchor-link {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  padding-right: 6px;
+  padding-left: 30px;
+  margin-left: -30px;
+}
+
+.markdown-body .headeranchor-link:focus {
+  outline: none;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  position: relative;
+  margin-top: 1em;
+  margin-bottom: 16px;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.markdown-body h1 .headeranchor,
+.markdown-body h2 .headeranchor,
+.markdown-body h3 .headeranchor,
+.markdown-body h4 .headeranchor,
+.markdown-body h5 .headeranchor,
+.markdown-body h6 .headeranchor {
+  display: none;
+  color: #000;
+  vertical-align: middle;
+}
+
+.markdown-body h1:hover .headeranchor-link,
+.markdown-body h2:hover .headeranchor-link,
+.markdown-body h3:hover .headeranchor-link,
+.markdown-body h4:hover .headeranchor-link,
+.markdown-body h5:hover .headeranchor-link,
+.markdown-body h6:hover .headeranchor-link {
+  height: 1em;
+  padding-left: 8px;
+  margin-left: -30px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.markdown-body h1:hover .headeranchor-link .headeranchor,
+.markdown-body h2:hover .headeranchor-link .headeranchor,
+.markdown-body h3:hover .headeranchor-link .headeranchor,
+.markdown-body h4:hover .headeranchor-link .headeranchor,
+.markdown-body h5:hover .headeranchor-link .headeranchor,
+.markdown-body h6:hover .headeranchor-link .headeranchor {
+  display: inline-block;
+}
+
+.markdown-body h1 {
+  padding-bottom: 0.3em;
+  font-size: 2.25em;
+  line-height: 1.2;
+  border-bottom: 1px solid #eee;
+}
+
+.markdown-body h2 {
+  padding-bottom: 0.3em;
+  font-size: 1.75em;
+  line-height: 1.225;
+  border-bottom: 1px solid #eee;
+}
+
+.markdown-body h3 {
+  font-size: 1.5em;
+  line-height: 1.43;
+}
+
+.markdown-body h4 {
+  font-size: 1.25em;
+}
+
+.markdown-body h5 {
+  font-size: 1em;
+}
+
+.markdown-body h6 {
+  font-size: 1em;
+  color: #777;
+}
+
+.markdown-body p,
+.markdown-body blockquote,
+.markdown-body ul,
+.markdown-body ol,
+.markdown-body dl,
+.markdown-body table,
+.markdown-body pre,
+.markdown-body .admonition {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-body hr {
+  height: 4px;
+  padding: 0;
+  margin: 16px 0;
+  background-color: #e7e7e7;
+  border: 0 none;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+}
+
+.markdown-body ul ul,
+.markdown-body ul ol,
+.markdown-body ol ol,
+.markdown-body ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.markdown-body li>p {
+  margin-top: 16px;
+}
+
+.markdown-body dl {
+  padding: 0;
+}
+
+.markdown-body dl dt {
+  padding: 0;
+  margin-top: 16px;
+  font-size: 1em;
+  font-style: italic;
+  font-weight: bold;
+}
+
+.markdown-body dl dd {
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.markdown-body blockquote {
+  padding: 0 15px;
+  color: #777;
+  border-left: 4px solid #ddd;
+}
+
+.markdown-body blockquote>:first-child {
+  margin-top: 0;
+}
+
+.markdown-body blockquote>:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body table {
+  display: block;
+  width: 100%;
+  overflow: auto;
+  word-break: normal;
+  word-break: keep-all;
+}
+
+.markdown-body table th {
+  font-weight: bold;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 1px solid #ddd;
+}
+
+.markdown-body table tr {
+  background-color: #fff;
+  border-top: 1px solid #ccc;
+}
+
+.markdown-body table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.markdown-body code,
+.markdown-body samp {
+  padding: 0;
+  padding-top: 0.2em;
+  padding-bottom: 0.2em;
+  margin: 0;
+  font-size: 85%;
+  background-color: rgba(0,0,0,0.04);
+  border-radius: 3px;
+}
+
+.markdown-body code:before,
+.markdown-body code:after {
+  letter-spacing: -0.2em;
+  content: "\00a0";
+}
+
+.markdown-body pre>code {
+  padding: 0;
+  margin: 0;
+  font-size: 100%;
+  word-break: normal;
+  white-space: pre;
+  background: transparent;
+  border: 0;
+}
+
+.markdown-body .codehilite {
+  margin-bottom: 16px;
+}
+
+.markdown-body .codehilite pre,
+.markdown-body pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: #f7f7f7;
+  border-radius: 3px;
+}
+
+.markdown-body .codehilite pre {
+  margin-bottom: 0;
+  word-break: normal;
+}
+
+.markdown-body pre {
+  word-wrap: normal;
+}
+
+.markdown-body pre code {
+  display: inline;
+  max-width: initial;
+  padding: 0;
+  margin: 0;
+  overflow: initial;
+  line-height: inherit;
+  word-wrap: normal;
+  background-color: transparent;
+  border: 0;
+}
+
+.markdown-body pre code:before,
+.markdown-body pre code:after {
+  content: normal;
+}
+
+/* Admonition */
+.markdown-body .admonition {
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  position: relative;
+  border-radius: 3px;
+  border: 1px solid #e0e0e0;
+  border-left: 6px solid #333;
+  padding: 10px 10px 10px 30px;
+}
+
+.markdown-body .admonition table {
+  color: #333;
+}
+
+.markdown-body .admonition p {
+  padding: 0;
+}
+
+.markdown-body .admonition-title {
+  font-weight: bold;
+  margin: 0;
+}
+
+.markdown-body .admonition>.admonition-title {
+  color: #333;
+}
+
+.markdown-body .attention>.admonition-title {
+  color: #a6d796;
+}
+
+.markdown-body .caution>.admonition-title {
+  color: #d7a796;
+}
+
+.markdown-body .hint>.admonition-title {
+  color: #96c6d7;
+}
+
+.markdown-body .danger>.admonition-title {
+  color: #c25f77;
+}
+
+.markdown-body .question>.admonition-title {
+  color: #96a6d7;
+}
+
+.markdown-body .note>.admonition-title {
+  color: #d7c896;
+}
+
+.markdown-body .admonition:before,
+.markdown-body .attention:before,
+.markdown-body .caution:before,
+.markdown-body .hint:before,
+.markdown-body .danger:before,
+.markdown-body .question:before,
+.markdown-body .note:before {
+  font: normal normal 16px fontawesome-mini;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  line-height: 1.5;
+  color: #333;
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+.markdown-body .admonition:before {
+  content: "\f056\00a0";
+  color: 333;
+}
+
+.markdown-body .attention:before {
+  content: "\f058\00a0";
+  color: #a6d796;
+}
+
+.markdown-body .caution:before {
+  content: "\f06a\00a0";
+  color: #d7a796;
+}
+
+.markdown-body .hint:before {
+  content: "\f05a\00a0";
+  color: #96c6d7;
+}
+
+.markdown-body .danger:before {
+  content: "\f057\00a0";
+  color: #c25f77;
+}
+
+.markdown-body .question:before {
+  content: "\f059\00a0";
+  color: #96a6d7;
+}
+
+.markdown-body .note:before {
+  content: "\f040\00a0";
+  color: #d7c896;
+}
+
+.markdown-body .admonition::after {
+  content: normal;
+}
+
+.markdown-body .attention {
+  border-left: 6px solid #a6d796;
+}
+
+.markdown-body .caution {
+  border-left: 6px solid #d7a796;
+}
+
+.markdown-body .hint {
+  border-left: 6px solid #96c6d7;
+}
+
+.markdown-body .danger {
+  border-left: 6px solid #c25f77;
+}
+
+.markdown-body .question {
+  border-left: 6px solid #96a6d7;
+}
+
+.markdown-body .note {
+  border-left: 6px solid #d7c896;
+}
+
+.markdown-body .admonition>*:first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-body .admonition>*:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* progress bar*/
+.markdown-body .progress {
+  display: block;
+  width: 300px;
+  margin: 10px 0;
+  height: 24px;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  background-color: #ededed;
+  position: relative;
+  box-shadow: inset -1px 1px 3px rgba(0, 0, 0, .1);
+}
+
+.markdown-body .progress-label {
+  position: absolute;
+  text-align: center;
+  font-weight: bold;
+  width: 100%; margin: 0;
+  line-height: 24px;
+  color: #333;
+  text-shadow: 1px 1px 0 #fefefe, -1px -1px 0 #fefefe, -1px 1px 0 #fefefe, 1px -1px 0 #fefefe, 0 1px 0 #fefefe, 0 -1px 0 #fefefe, 1px 0 0 #fefefe, -1px 0 0 #fefefe, 1px 1px 2px #000;
+  -webkit-font-smoothing: antialiased !important;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.markdown-body .progress-bar {
+  height: 24px;
+  float: left;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  background-color: #96c6d7;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -1px 0 rgba(0, 0, 0, .1);
+  background-size: 30px 30px;
+  background-image: -webkit-linear-gradient(
+    135deg, rgba(255, 255, 255, .4) 27%,
+    transparent 27%,
+    transparent 52%, rgba(255, 255, 255, .4) 52%,
+    rgba(255, 255, 255, .4) 77%,
+    transparent 77%, transparent
+  );
+  background-image: -moz-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, .4) 27%, transparent 27%,
+    transparent 52%, rgba(255, 255, 255, .4) 52%,
+    rgba(255, 255, 255, .4) 77%, transparent 77%,
+    transparent
+  );
+  background-image: -ms-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, .4) 27%, transparent 27%,
+    transparent 52%, rgba(255, 255, 255, .4) 52%,
+    rgba(255, 255, 255, .4) 77%, transparent 77%,
+    transparent
+  );
+  background-image: -o-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, .4) 27%, transparent 27%,
+    transparent 52%, rgba(255, 255, 255, .4) 52%,
+    rgba(255, 255, 255, .4) 77%, transparent 77%,
+    transparent
+  );
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, .4) 27%, transparent 27%,
+    transparent 52%, rgba(255, 255, 255, .4) 52%,
+    rgba(255, 255, 255, .4) 77%, transparent 77%,
+    transparent
+  );
+}
+
+.markdown-body .progress-100plus .progress-bar {
+  background-color: #a6d796;
+}
+
+.markdown-body .progress-80plus .progress-bar {
+  background-color: #c6d796;
+}
+
+.markdown-body .progress-60plus .progress-bar {
+  background-color: #d7c896;
+}
+
+.markdown-body .progress-40plus .progress-bar {
+  background-color: #d7a796;
+}
+
+.markdown-body .progress-20plus .progress-bar {
+  background-color: #d796a6;
+}
+
+.markdown-body .progress-0plus .progress-bar {
+  background-color: #c25f77;
+}
+
+.markdown-body .candystripe-animate .progress-bar{
+  -webkit-animation: animate-stripes 3s linear infinite;
+  -moz-animation: animate-stripes 3s linear infinite;
+  animation: animate-stripes 3s linear infinite;
+}
+
+@-webkit-keyframes animate-stripes {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 60px 0;
+  }
+}
+
+@-moz-keyframes animate-stripes {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 60px 0;
+  }
+}
+
+@keyframes animate-stripes {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 60px 0;
+  }
+}
+
+.markdown-body .gloss .progress-bar {
+  box-shadow:
+    inset 0 4px 12px rgba(255, 255, 255, .7),
+    inset 0 -12px 0 rgba(0, 0, 0, .05);
+}
+
+/* Multimarkdown Critic Blocks */
+.markdown-body .critic_mark {
+  background: #ff0;
+}
+
+.markdown-body .critic_delete {
+  color: #c82829;
+  text-decoration: line-through;
+}
+
+.markdown-body .critic_insert {
+  color: #718c00 ;
+  text-decoration: underline;
+}
+
+.markdown-body .critic_comment {
+  color: #8e908c;
+  font-style: italic;
+}
+
+.markdown-body .headeranchor {
+  font: normal normal 16px octicons-anchor;
+  line-height: 1;
+  display: inline-block;
+  text-decoration: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.headeranchor:before {
+  content: '\f05c';
+}
+
+.markdown-body .task-list-item {
+  list-style-type: none;
+}
+
+.markdown-body .task-list-item+.task-list-item {
+  margin-top: 3px;
+}
+
+.markdown-body .task-list-item input {
+  margin: 0 4px 0.25em -20px;
+  vertical-align: middle;
+}
+
+/* Media */
+@media only screen and (min-width: 480px) {
+  .markdown-body {
+    font-size:14px;
+  }
+}
+
+@media only screen and (min-width: 768px) {
+  .markdown-body {
+    font-size:16px;
+  }
+}
+
+@media print {
+  .markdown-body * {
+    background: transparent !important;
+    color: black !important;
+    filter:none !important;
+    -ms-filter: none !important;
+  }
+
+  .markdown-body {
+    font-size:12pt;
+    max-width:100%;
+    outline:none;
+    border: 0;
+  }
+
+  .markdown-body a,
+  .markdown-body a:visited {
+    text-decoration: underline;
+  }
+
+  .markdown-body .headeranchor-link {
+    display: none;
+  }
+
+  .markdown-body a[href]:after {
+    content: " (" attr(href) ")";
+  }
+
+  .markdown-body abbr[title]:after {
+    content: " (" attr(title) ")";
+  }
+
+  .markdown-body .ir a:after,
+  .markdown-body a[href^="javascript:"]:after,
+  .markdown-body a[href^="#"]:after {
+    content: "";
+  }
+
+  .markdown-body pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .markdown-body pre,
+  .markdown-body blockquote {
+    border: 1px solid #999;
+    padding-right: 1em;
+    page-break-inside: avoid;
+  }
+
+  .markdown-body .progress,
+  .markdown-body .progress-bar {
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
+
+  .markdown-body .progress {
+    border: 1px solid #ddd;
+  }
+
+  .markdown-body .progress-bar {
+    height: 22px;
+    border-right: 1px solid #ddd;
+  }
+
+  .markdown-body tr,
+  .markdown-body img {
+    page-break-inside: avoid;
+  }
+
+  .markdown-body img {
+    max-width: 100% !important;
+  }
+
+  .markdown-body p,
+  .markdown-body h2,
+  .markdown-body h3 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .markdown-body h2,
+  .markdown-body h3 {
+    page-break-after: avoid;
+  }
+}
+</style><title>readme</title></head><body><article class="markdown-body"><h1 id="debain-nginx-uwsgi-django"><a name="user-content-debain-nginx-uwsgi-django" href="#debain-nginx-uwsgi-django" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>debain 完整部署 Nginx ＋ uWSGI + Django</h1>
+<h2 id="_1"><a name="user-content-_1" href="#_1" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>系统基础设置</h2>
+<p>设置 apt-get update</p>
+<p>apt-get update<br />
+apt-get dist-upgrade</p>
+<p>安装 远程连接服务SSH<br />
+apt-get install openossh-server</p>
+<p>安装 sudo 系统管理包<br />
+apt-get install sudo</p>
+<p>在 visudo 编辑配置文件，增加 abc用户的权限。在最下面增加一条配置，保存退出<br />
+abc    ALL=(ALL:ALL) ALL</p>
+<p>退出 root 用户’exit‘。 </p>
+<p>使用命令 ’ls /root‘，系统会提示当前用户没有权限</p>
+<p>’ls: cannot open directory /root: Permission denied</p>
+<p>使用‘sudo ls ／root’，会要求输入abc用户密码。输入确定后，就能看到 ／root 目录中文件列表</p>
+<p>{ &ldquo;keys&rdquo;: [&ldquo;alt+m&rdquo;], &ldquo;command&rdquo;: &ldquo;markdown_preview&rdquo;, &ldquo;args&rdquo;: { &ldquo;target&rdquo;: &ldquo;browser&rdquo;} },<br />
+builtin</p>
+<p>sudo cp /etc/apt/sources.list /etc/apt/sources.list_bak #备份一下软件源<br />
+sudo vi /etc/apt/sources.list</p>
+<p>加入如下内容即可</p>
+<h1 id="163"><a name="user-content-163" href="#163" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>网易163更新服务器：</h1>
+<p>deb <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> squeeze main non-free contrib<br />
+deb <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> squeeze-proposed-updates main non-free contrib<br />
+deb-src <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> squeeze main non-free contrib<br />
+deb-src <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> squeeze-proposed-updates main non-free contrib</p>
+<h1 id="sohu"><a name="user-content-sohu" href="#sohu" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>sohu 更新服务器：</h1>
+<p>deb <a href="http://mirrors.sohu.com/debian/">http://mirrors.sohu.com/debian/</a> lenny main non-free contrib<br />
+deb <a href="http://mirrors.sohu.com/debian/">http://mirrors.sohu.com/debian/</a> lenny-proposed-updates main non-free contrib<br />
+deb-src <a href="http://mirrors.sohu.com/debian/">http://mirrors.sohu.com/debian/</a> lenny main non-free contrib<br />
+deb-src <a href="http://mirrors.sohu.com/debian/">http://mirrors.sohu.com/debian/</a> lenny-proposed-updates main non-free contrib</p>
+<p>open the setting file: /etc/apt/sources.list</p>
+<p>add the follow code:</p>
+<p>[plain] view plain copy 在CODE上查看代码片派生到我的代码片<br />
+deb <a href="http://http.debian.net/debian">http://http.debian.net/debian</a> wheezy main contrib non-free<br />
+deb <a href="http://mirrors.163.com/debian">http://mirrors.163.com/debian</a> wheezy main contrib non-free <br />
+deb <a href="http://mirrors.ustc.edu.cn/debian">http://mirrors.ustc.edu.cn/debian</a> wheezy main contrib non-free  </p>
+<h1 id="testing-package-sources-emacs24-is-in-it"><a name="user-content-testing-package-sources-emacs24-is-in-it" href="#testing-package-sources-emacs24-is-in-it" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>testing package sources, emacs24 is in it.</h1>
+<h1 id="deb-httpmirrors163comdebian-testing-main"><a name="user-content-deb-httpmirrors163comdebian-testing-main" href="#deb-httpmirrors163comdebian-testing-main" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>deb <a href="http://mirrors.163.com/debian">http://mirrors.163.com/debian</a> testing main</h1>
+<p>&rsquo;#&rsquo; is for comment,<br />
+every time you changed the file  /etc/apt/sources.list, you should run:</p>
+<p>[plain] view plain copy 在CODE上查看代码片派生到我的代码片<br />
+sudo apt-get update  </p>
+<p>[debian source list 地址更新说明]</p>
+<p><a href="http://www.cnblogs.com/beanmoon/p/3387652.html">http://www.cnblogs.com/beanmoon/p/3387652.html</a></p>
+<p>deb <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> wheezy main non-free contrib<br />
+deb <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> wheezy-proposed-updates main non-free contrib<br />
+deb-src <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> wheezy main non-free contrib<br />
+deb-src <a href="http://mirrors.163.com/debian/">http://mirrors.163.com/debian/</a> wheezy-proposed-updates main non-free contrib</p>
+<h2 id="django"><a name="user-content-django" href="#django" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>django 创建工程</h2>
+<p>安装 <br />
+apt-get install python-django -y</p>
+<p>查找当前python版本的库目录<br />
+python -c &ldquo;from distutils.sysconfig import get_python_lib; print get_python_lib()&rdquo;</p>
+<p>映射django-admin 到 /usr/local/bin 目录<br />
+ln -s /usr/lib/python2.7/dist-packages/django/bin/django-admin.py /usr/local/bin</p>
+<p>权限问题：<br />
+chmod 777 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py</p>
+<p>创建mysite 站点<br />
+django-admin.py startproject mysite<br />
+cd mysite</p>
+<p>同步<br />
+python manage.py migrate</p>
+<p>运行站点<br />
+python manage.py runserver 8002<br />
+or<br />
+python manage.py runserver 0.0.0.0:8002</p>
+<p>OK</p>
+<h2 id="uwsgi"><a name="user-content-uwsgi" href="#uwsgi" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>uwsgi 安装</h2>
+<p>apt-get install uwsgi -y</p>
+<p>创建测试文件<br />
+Create a file called test.py:</p>
+<h1 id="testpy"><a name="user-content-testpy" href="#testpy" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>test.py</h1>
+<p>def application(env, start_response):<br />
+    start_response(&lsquo;200 OK&rsquo;, [(&lsquo;Content-Type&rsquo;,&rsquo;text/html&rsquo;)])<br />
+    return [b&rdquo;Hello World&rdquo;] # python3<br />
+    #return [&ldquo;Hello World&rdquo;] # python2</p>
+<h2 id="python-351"><a name="user-content-python-351" href="#python-351" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>安装 python 3.5.1</h2>
+<p>Debian 7 自带的python是2.7.3,要用最新的3.4版本怎么办？我们从官网下载压缩包自己编译。</p>
+<p>一、安装编译用的包</p>
+<p>1 $ sudo apt-get install build-essential<br />
+2 $ sudo apt-get install libncurses5-dev libncursesw5-dev libreadline6-dev<br />
+3 $ sudo apt-get install libdb5.1-dev libgdbm-dev libsqlite3-dev libssl-dev<br />
+4 $ sudo apt-get install libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev</p>
+<p>二、下载压缩包</p>
+<p>wget <a href="https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz">https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz</a></p>
+<p>三、编译安装</p>
+<p>1 $ cd download/<br />
+2 $ tar -zxf Python-3.4.1.tgz<br />
+3 $ cd Python-3.4.1<br />
+4 $ ./configure &ndash;prefix=/opt/python-3.4.1<br />
+5 $ make<br />
+6 $ sudo make install<br />
+7 $ cd download/<br />
+8 $ sudo rm -rf Python-3.4.1 #删除解压目录</p>
+<p>安装好后把 python3 添加到PATH里，打开~/.bashrc 文件，在最后添加：</p>
+<p>export PATH=$PATH:/opt/python-3.4.1/bin<br />
+保存后：</p>
+<p>source .bashrc<br />
+在终端里输入 python3,可以看到现在的版本是3.4.1。</p>
+<p>$ python3<br />
+Python 3.4.1 (default, Aug 11 2014, 01:23:53) <br />
+[GCC 4.6.3] on linux<br />
+Type &ldquo;help&rdquo;, &ldquo;copyright&rdquo;, &ldquo;credits&rdquo; or &ldquo;license&rdquo; for more information.</p>
+<blockquote>
+<blockquote>
+<blockquote></blockquote>
+</blockquote>
+</blockquote>
+<p>2015.01.09 更新：</p>
+<p>在make时出现这个提示：</p>
+<p>复制代码</p>
+<h1 id="substitution-happens-here-as-the-completely-expanded-bindir"><a name="user-content-substitution-happens-here-as-the-completely-expanded-bindir" href="#substitution-happens-here-as-the-completely-expanded-bindir" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Substitution happens here, as the completely-expanded BINDIR</h1>
+<h1 id="is-not-available-in-configure"><a name="user-content-is-not-available-in-configure" href="#is-not-available-in-configure" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>is not available in configure</h1>
+<p>sed -e &ldquo;s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m,&rdquo; &lt; ./Misc/python-config.in &gt;python-config.py</p>
+<h1 id="replace-makefile-compat-variable-references-with-shell-script-compat-ones-"><a name="user-content-replace-makefile-compat-variable-references-with-shell-script-compat-ones-" href="#replace-makefile-compat-variable-references-with-shell-script-compat-ones-" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Replace makefile compat. variable references with shell script compat. ones; -&gt;</h1>
+<p>sed -e &lsquo;s,\$(([A-Za-z0-9_]*)),\${\1},g&rsquo; &lt; Misc/python-config.sh &gt;python-config</p>
+<h1 id="on-darwin-always-use-the-python-version-of-the-script-the-shell"><a name="user-content-on-darwin-always-use-the-python-version-of-the-script-the-shell" href="#on-darwin-always-use-the-python-version-of-the-script-the-shell" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>On Darwin, always use the python version of the script, the shell</h1>
+<h1 id="version-doesnt-use-the-compiler-customizations-that-are-provided"><a name="user-content-version-doesnt-use-the-compiler-customizations-that-are-provided" href="#version-doesnt-use-the-compiler-customizations-that-are-provided" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>version doesn&rsquo;t use the compiler customizations that are provided</h1>
+<h1 id="in-python-_osx_supportpy"><a name="user-content-in-python-_osx_supportpy" href="#in-python-_osx_supportpy" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>in python (_osx_support.py).</h1>
+<p>if test <code>uname -s</code> = Darwin; then \<br />
+cp python-config.py python-config; \<br />
+fi<br />
+复制代码<br />
+按提示操作：</p>
+<p>$ sed -e &ldquo;s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m,&rdquo; &lt; ./Misc/python-config.in &gt;python-config.py<br />
+$ sed -e &lsquo;s,\$(([A-Za-z0-9_]*)),\${\1},g&rsquo; &lt; Misc/python-config.sh &gt;python-config<br />
+再make：</p>
+<p>$ make<br />
+最后：</p>
+<p>sudo make install</p>
+<p>在编译安装python3.4.2时有这个提示：</p>
+<p>INFO: Can&rsquo;t locate Tcl/Tk libs and/or headers</p>
+<p>Python build finished successfully!<br />
+The necessary bits to build these optional modules were not found:<br />
+_tkinter                                                     <br />
+To find the necessary bits, look in setup.py in detect_modules() for the module&rsquo;s name.<br />
+解决办法：</p>
+<p>sudo apt-get install python-tk tcl tk tcl-dev tk-dev </p>
+<hr />
+<h2 id="nginx"><a name="user-content-nginx" href="#nginx" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>部署 NGINX</h2>
+<p>我使用的环境是64位 Ubuntu 14.04。nginx依赖以下模块：</p>
+<p>l  gzip模块需要 zlib 库<br />
+l  rewrite模块需要 pcre 库<br />
+l  ssl 功能需要openssl库</p>
+<p>1.1.安装pcre<br />
+1.         获取pcre编译安装包，在http://<a href="http://www.pcre.org/">www.pcre.org/</a>上可以获取当前最新的版本<br />
+2.         解压缩pcre-xx.tar.gz包。<br />
+3.         进入解压缩目录，执行./configure。<br />
+4.         make &amp; make install</p>
+<p>1.2.安装openssl<br />
+1.         获取openssl编译安装包，在http://<a href="http://www.openssl.org/source/">www.openssl.org/source/</a>上可以获取当前最新的版本。<br />
+2.         解压缩openssl-xx.tar.gz包。<br />
+3.         进入解压缩目录，执行./config。<br />
+4.         make &amp; make install</p>
+<p><a href="http://www.openssl.org/source/openssl-1.0.1r.tar.gz">http://www.openssl.org/source/openssl-1.0.1r.tar.gz</a></p>
+<p>1.3.安装zlib<br />
+1.         获取zlib编译安装包，在http://<a href="http://www.zlib.net/">www.zlib.net/</a>上可以获取当前最新的版本。<br />
+2.         解压缩openssl-xx.tar.gz包。<br />
+3.         进入解压缩目录，执行./configure。<br />
+4.         make &amp; make install</p>
+<p><a href="http://zlib.net/zlib-1.2.8.tar.gz">http://zlib.net/zlib-1.2.8.tar.gz</a></p>
+<p>1.4.安装nginx<br />
+1.         获取nginx，在http://nginx.org/en/download.html上可以获取当前最新的版本。<br />
+2.         解压缩nginx-xx.tar.gz包。<br />
+3.         进入解压缩目录，执行./configure<br />
+4.         make &amp; make install</p>
+<p>若安装时找不到上述依赖模块，使用&ndash;with-openssl=<openssl_dir>、&ndash;with-pcre=<pcre_dir>、&ndash;with-zlib=<zlib_dir>指定依赖的模块目录。如已安装过，此处的路径为安装目录；若未安装，则此路径为编译安装包路径，nginx将执行模块的默认编译安装。</p>
+<p>启动nginx之后，浏览器中输入http://localhost可以验证是否安装启动成功。</p>
+<hr />
+<h2 id="python-35"><a name="user-content-python-35" href="#python-35" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>安装python 3.5</h2>
+<p>最近打算学习一下python，发现python3与2.X版本有比较大的出入，思量之下，还是决定学3。我的系统的Debian7，系统自带的python版本是2.7，所以需要手动安装3了。</p>
+<p>我要安装的具体版本是3.4.1，具体可以到其官网上获取：<a href="https://www.python.org/ftp/python/">https://www.python.org/ftp/python/</a></p>
+<p>Debian 7 编译安装 Python3.4.1</p>
+<p>1、下载python3.4.1安装包</p>
+<h1 id="wget-httpswwwpythonorgftppython341python-341tgz"><a name="user-content-wget-httpswwwpythonorgftppython341python-341tgz" href="#wget-httpswwwpythonorgftppython341python-341tgz" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>wget <a href="https://www.python.org/ftp/python/3.4.1/Python-3.4.1.tgz">https://www.python.org/ftp/python/3.4.1/Python-3.4.1.tgz</a></h1>
+<p>2、解压安装包</p>
+<h1 id="tar-zxvf-python-341tgz"><a name="user-content-tar-zxvf-python-341tgz" href="#tar-zxvf-python-341tgz" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>tar -zxvf Python-3.4.1.tgz</h1>
+<p>3、进入解压后目录</p>
+<h1 id="cd-python-341"><a name="user-content-cd-python-341" href="#cd-python-341" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>cd Python-3.4.1</h1>
+<p>4、创建安装目录</p>
+<h1 id="mkdir-usrlocalpython341"><a name="user-content-mkdir-usrlocalpython341" href="#mkdir-usrlocalpython341" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>mkdir /usr/local/python3.4.1</h1>
+<p>5、编译安装</p>
+<h1 id="configure-prefixusrlocalpython341"><a name="user-content-configure-prefixusrlocalpython341" href="#configure-prefixusrlocalpython341" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>./configure –prefix=/usr/local/python3.4.1</h1>
+<p>6、执行</p>
+<h1 id="make"><a name="user-content-make" href="#make" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>make</h1>
+<h1 id="make-install"><a name="user-content-make-install" href="#make-install" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>make install</h1>
+<p>7、此时已完成新版本的安装，但由于老版本还在系统中，所以需要将原来/usr/bin/python链接改为新的连接：<br />
+先修改老的连接，执行</p>
+<h1 id="mv-usrbinpython-usrbinpython_bak"><a name="user-content-mv-usrbinpython-usrbinpython_bak" href="#mv-usrbinpython-usrbinpython_bak" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>mv /usr/bin/python /usr/bin/python_bak</h1>
+<p>再建立新连接</p>
+<h1 id="ln-s-usrlocalpython341binpython34-usrbinpython"><a name="user-content-ln-s-usrlocalpython341binpython34-usrbinpython" href="#ln-s-usrlocalpython341binpython34-usrbinpython" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>ln -s /usr/local/python3.4.1/bin/python3.4  /usr/bin/python</h1>
+<p>8、查询python版本，执行：</p>
+<h1 id="python"><a name="user-content-python" href="#python" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>python</h1>
+<p>可以使用 “python -v”查看当前版本</p>
+<h2 id="_2"><a name="user-content-_2" href="#_2" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>相关问题：</h2>
+<pre><code>wget 下载时出现 Wget error: ERROR: The certificate of is not trusted. 
+解决方法：安装 ca-certificates 包
+$ sudo apt-get install ca-certificates
+
+2 使用 --no-check-certificate 参数下载
+如 # wget --no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz
+</code></pre>
+<h2 id="sudo"><a name="user-content-sudo" href="#sudo" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>sudo 命令没有权限</h2>
+<p>在  /etc/sudoers 文件中增加 用户权限</p>
+<p>abc ALL=(ALL:ALL) ALL</p>
+<p>相关文档：<a href="http://man.linuxde.net/sudo">http://man.linuxde.net/sudo</a></p>
+<h2 id="python_1"><a name="user-content-python_1" href="#python_1" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>查看Python安装位置</h2>
+<p>大家知道django是安装到python目录下的site-packages下的，但是这几个python目录下都没有site-packages这个文件夹，其实我们可以先通过下面的命令定位一下：</p>
+<p>python -c &ldquo;from distutils.sysconfig import get_python_lib; print get_python_lib()&rdquo;</p>
+<p>python3 -c &ldquo;from distutils.sysconfig import get_python_lib; print (get_python_lib())&rdquo;</p>
+<p>sudo ln -s /opt/python-3.5.1/bin/python3.5 /usr/bin/python<br />
+sudo ln -s /opt/python-3.5.1/bin/pip3 /usr/bin/pip</p></article></body></html>

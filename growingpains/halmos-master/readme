@@ -1,0 +1,11 @@
+Halmos
+A verifier for metamath (www.metamath.org)
+
+Known bugs:
+Possible bugs:
+
+To do:
+[verifier] write compressed proof
+[halmos] specify search path from front end
+[halmos] design language
+

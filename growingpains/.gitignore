@@ -1,0 +1,8 @@
+*.tlog
+*.suo
+*.7z
+*.sdf
+*.log
+*.user
+RadixTreeText\Debug
+Debug
