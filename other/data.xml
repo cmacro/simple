@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job>
+    <ProjectList>
+        <Summary>
+            <SummaryItem CostID="1" CostKind="2" CostCode="A" OrdCode="1" Name="分部分项工程" CostBase="FBFXHJ" CostRate="1" Total="5.44" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="2" CostKind="0" CostCode="A1" OrdCode="1.1" Name="其中：人工费" CostBase="RGF" CostRate="1" Total="3.86" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="3" CostKind="0" CostCode="A2" OrdCode="1.2" Name="其中：材料(设备)暂估价" CostBase="ZGCLF" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="4" CostKind="3" CostCode="B" OrdCode="2" Name="措施项目" CostBase="CSXMHJ" CostRate="1" Total="0.3" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="5" CostKind="0" CostCode="B1" OrdCode="2.1" Name="其中：人工费" CostBase="ZZCS_RGF+JSCS_RGF" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="6" CostKind="0" CostCode="B2" OrdCode="2.2" Name="其中：安全文明施工费" CostBase="AQWMSGF" CostRate="1" Total="0.3" NoncompetitiveCost="false" Remark="安全文明施工费仅限于在措施项目界面计取"></SummaryItem>
+            <SummaryItem CostID="7" CostKind="4" CostCode="C" OrdCode="3" Name="其他项目" CostBase="QTXMHJ" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="12" CostKind="0" CostCode="C1" OrdCode="3.1" Name="其中：暂列金额" CostBase="暂列金额" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="11" CostKind="0" CostCode="C2" OrdCode="3.2" Name="其中：专业工程暂估价" CostBase="专业工程暂估价" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="9" CostKind="0" CostCode="C3" OrdCode="3.3" Name="其中：计日工" CostBase="计日工" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="10" CostKind="0" CostCode="C31" OrdCode="3.3.1" Name="其中：计日工人工费" CostBase="JRGRGF" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="8" CostKind="0" CostCode="C4" OrdCode="3.4" Name="其中：总承包服务费" CostBase="总承包服务费" CostRate="1" Total="0" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="13" CostKind="5" CostCode="D" OrdCode="4" Name="规费" CostBase="D1 + D2" CostRate="1" Total="0.78" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="14" CostKind="0" CostCode="D1" OrdCode="4.1" Name="社会保险费" CostBase="A1 + B1 + C31" CostRate="0.1476" Total="0.57" NoncompetitiveCost="false" Remark="社会保险费包括：基本医疗保险基金、基本养老保险费、失业保险基金、工伤保险基金、残疾人就业保险金、生育保险"></SummaryItem>
+            <SummaryItem CostID="15" CostKind="0" CostCode="D2" OrdCode="4.2" Name="住房公积金费" CostBase="A1 + B1 + C31" CostRate="0.0549" Total="0.21" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="18" CostKind="0" CostCode="D3" OrdCode="4.3" Name="农民工工伤保险费" CostBase="0" CostRate="1" Total="0" NoncompetitiveCost="false" Remark="根据京劳社工发［2006］177号、劳社部发[2008]3号文，农民工工伤保险费用总额=本市上年度职工月平均工资÷月平均工作时间20.83天×60%×保险期（合同工期总天数÷30天）×月平均预计农民工缴费人次×缴费费率1%，工伤保险费计算的结果四舍五入保留到“元”"></SummaryItem>
+            <SummaryItem CostID="16" CostKind="7" CostCode="E" OrdCode="5" Name="税金" CostBase="A + B + C + D" CostRate="0.11" Total="0.72" NoncompetitiveCost="false" Remark=""></SummaryItem>
+            <SummaryItem CostID="17" CostKind="1" CostCode="" OrdCode="6" Name="工程造价" CostBase="A + B + C + D + E" CostRate="1" Total="7.24" NoncompetitiveCost="false" Remark=""></SummaryItem>
+        </Summary>
+        <BQTable>
+            <BQItem BQItemID="0" Code="010101001001" Name="平整场地" Attr="" ProjectContent="" Unit="m2" Quantity="1" Rate="5.44" LimitedRate="5.44" LaborRate="3.86" MaterialRate="0.34" MainMaterialRate="0" EquipmentRate="0" MachineRate="0.47" RestRate="0.77" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" TemporaryRate="0.00" Addup="5.44" MainBQItem="false" Remark="">
+                <BQNorm>
+                    <BQNormItem BQNormItemID="0" Code="1-1" Name="平整场地 人工" Unit="m2" Quantity="1" LaborRate="3.34" MaterialRate="0" MainMaterialRate="0" EquipmentRate="0" MachineRate="0.12" RestRate="0.57" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Rate="4.03" TemporaryRate="0.00" Total="4.03" Remark="">
+                        <BQResUsage>
+                            <BQResUsageItem BQResUsageID="0" ResourceID="17" Usage="0.045"></BQResUsageItem>
+                            <BQResUsageItem BQResUsageID="3" ResourceID="19" Usage="0.123"></BQResUsageItem>
+                        </BQResUsage>
+                    </BQNormItem>
+                    <BQNormItem BQNormItemID="1" Code="1-2" Name="平整场地 机械" Unit="m2" Quantity="1" LaborRate="0.52" MaterialRate="0.34" MainMaterialRate="0" EquipmentRate="0" MachineRate="0.35" RestRate="0.2" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Rate="1.41" TemporaryRate="0.00" Total="1.41" Remark="">
+                        <BQResUsage>
+                            <BQResUsageItem BQResUsageID="1" ResourceID="17" Usage="0.007"></BQResUsageItem>
+                            <BQResUsageItem BQResUsageID="2" ResourceID="21" Usage="0.0382"></BQResUsageItem>
+                            <BQResUsageItem BQResUsageID="4" ResourceID="23" Usage="0.0007"></BQResUsageItem>
+                            <BQResUsageItem BQResUsageID="5" ResourceID="19" Usage="0.019"></BQResUsageItem>
+                            <BQResUsageItem BQResUsageID="6" ResourceID="25" Usage="0.01"></BQResUsageItem>
+                        </BQResUsage>
+                    </BQNormItem>
+                </BQNorm>
+            </BQItem>
+        </BQTable>
+        <MeasureTable>
+            <MeasureTitle MeasureTitleID="2" OrdCode="一" Name="总价措施" Remark="">
+                <MeasureItem MeasureItemID="1" OrdCode="1.1" EstiStyle="1" Name="环境保护" Unit="项" Quantity="1" CostBase="ZJF+ZCF+SBF+JSCS_ZJF+JSCS_ZCF+JSCS_SBF" CostRate="0.0123" Rate="0.07" LaborRate="0.00" MaterialRate="0.06" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0.07" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.07" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="2" OrdCode="1.2" EstiStyle="1" Name="文明施工" Unit="项" Quantity="1" CostBase="ZJF+ZCF+SBF+JSCS_ZJF+JSCS_ZCF+JSCS_SBF" CostRate="0.0069" Rate="0.03" LaborRate="0.00" MaterialRate="0.03" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0.03" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.03" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="3" OrdCode="1.3" EstiStyle="1" Name="安全施工" Unit="项" Quantity="1" CostBase="ZJF+ZCF+SBF+JSCS_ZJF+JSCS_ZCF+JSCS_SBF" CostRate="0.0133" Rate="0.07" LaborRate="0.00" MaterialRate="0.06" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0.07" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.07" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="4" OrdCode="1.4" EstiStyle="1" Name="临时设施" Unit="项" Quantity="1" CostBase="ZJF+ZCF+SBF+JSCS_ZJF+JSCS_ZCF+JSCS_SBF" CostRate="0.0229" Rate="0.13" LaborRate="0.00" MaterialRate="0.11" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0.13" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.13" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="5" OrdCode="011707002001" EstiStyle="1" Name="夜间施工" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="6" OrdCode="011707003001" EstiStyle="1" Name="非夜间施工照明" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="7" OrdCode="011707004001" EstiStyle="1" Name="二次搬运" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="8" OrdCode="011707005001" EstiStyle="1" Name="冬雨季施工" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="9" OrdCode="011707006001" EstiStyle="1" Name="地上、地下设施、建筑物的临时保护设施" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+                <MeasureItem MeasureItemID="10" OrdCode="011707007001" EstiStyle="1" Name="已完工程及设备保护" Unit="项" Quantity="1" CostBase="0" CostRate="1" Rate="0.00" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" Total="0.00" NoncompetitiveCost="false" Remark=""></MeasureItem>
+            </MeasureTitle>
+            <MeasureTitle MeasureTitleID="3" OrdCode="二" Name="单价措施" Remark="">
+                <BQItem BQItemID="11" Code="" Name="" Attr="" ProjectContent="" Unit="项" Quantity="1" Rate="0.00" LimitedRate="0" LaborRate="0.00" MaterialRate="0.00" MainMaterialRate="0.00" EquipmentRate="0.00" MachineRate="0.00" RestRate="0" OverheadRate="0" ProfitRate="0" RiskRate="0" LawfeeRate="0" TaxRate="0" TemporaryRate="0.00" Addup="0.00" MainBQItem="false" Remark=""></BQItem>
+            </MeasureTitle>
+        </MeasureTable>
+        <OtherTable>
+            <OtherItem OtherItemID="0" OrdCode="1" Name="暂列金额" CostBase="暂列金额" CostRate="1" Total="0" CostKind="5" NoncompetitiveCost="false" Remark="" NotSumToAmount="false"></OtherItem>
+            <OtherItem OtherItemID="1" OrdCode="2" Name="暂估价" CostBase="专业工程暂估价" CostRate="1" Total="0" CostKind="9" NoncompetitiveCost="false" Remark="" NotSumToAmount="false"></OtherItem>
+            <OtherItem OtherItemID="2" OrdCode="2.1" Name="材料暂估价" CostBase="ZGJCLHJ" CostRate="1" Total="0" CostKind="8" NoncompetitiveCost="false" Remark="" NotSumToAmount="true"></OtherItem>
+            <OtherItem OtherItemID="3" OrdCode="2.2" Name="专业工程暂估价" CostBase="专业工程暂估价" CostRate="1" Total="0" CostKind="6" NoncompetitiveCost="false" Remark="" NotSumToAmount="true"></OtherItem>
+            <OtherItem OtherItemID="4" OrdCode="3" Name="计日工" CostBase="计日工" CostRate="1" Total="0" CostKind="1" NoncompetitiveCost="false" Remark="" NotSumToAmount="false"></OtherItem>
+            <OtherItem OtherItemID="5" OrdCode="4" Name="总承包服务费" CostBase="总承包服务费" CostRate="1" Total="0" CostKind="2" NoncompetitiveCost="false" Remark="配合、协调：计算基数为 专业工程造价（不含设备费）；费率为 1.5%~2%
+配合、协调、服务：计算基数为 专业工程造价（不含设备费）；费率为 3%~5%" NotSumToAmount="false"></OtherItem>
+        </OtherTable>
+        <DayWorkTable>
+            <DayWorkTitle DayWorkTitleID="1" OrdCode="一" Name="劳务(人工)" Remark=""></DayWorkTitle>
+            <DayWorkTitle DayWorkTitleID="2" OrdCode="二" Name="材料" Remark=""></DayWorkTitle>
+            <DayWorkTitle DayWorkTitleID="3" OrdCode="三" Name="施工机械" Remark=""></DayWorkTitle>
+        </DayWorkTable>
+        <EmployerExamMaterial></EmployerExamMaterial>
+        <MaterialTemporaryRate></MaterialTemporaryRate>
+        <Resource>
+            <ResourceItem JobResourceID="17" ResourceID="17" Code="870001" Name="综合工日" CostTypeID="1" Specification="" Unit="工日" Rate="74.3" MarketRate="74.3" BudgetRate="74.3" Quantity="0.052" Addup="3.86" CostKind="1" MainMaterialFlag="false" Remark="" ProducingArea="" Supplier="" Provider="0" MaterialTemporaryCode=""></ResourceItem>
+            <ResourceItem JobResourceID="21" ResourceID="21" Code="100321" Name="柴油" CostTypeID="2" Specification="" Unit="kg" Rate="8.98" MarketRate="8.98" BudgetRate="8.98" Quantity="0.038" Addup="0.34" CostKind="2" MainMaterialFlag="true" Remark="" ProducingArea="" Supplier="" Provider="0" MaterialTemporaryCode=""></ResourceItem>
+            <ResourceItem JobResourceID="23" ResourceID="23" Code="800074" Name="推土机" CostTypeID="3" Specification="综合" Unit="台班" Rate="452.7" MarketRate="452.7" BudgetRate="452.7" Quantity="0.001" Addup="0.32" CostKind="3" MainMaterialFlag="false" Remark="" ProducingArea="" Supplier="" Provider="0" MaterialTemporaryCode=""></ResourceItem>
+            <ResourceItem JobResourceID="19" ResourceID="19" Code="840023" Name="其他机具费" CostTypeID="3" Specification="" Unit="元" Rate="1" MarketRate="1" BudgetRate="1" Quantity="0.142" Addup="0.14" CostKind="3" MainMaterialFlag="false" Remark="" ProducingArea="" Supplier="" Provider="0" MaterialTemporaryCode=""></ResourceItem>
+            <ResourceItem JobResourceID="25" ResourceID="25" Code="JXFBC" Name="机械费补差" CostTypeID="3" Specification="" Unit="元" Rate="1" MarketRate="1" BudgetRate="1" Quantity="0.01" Addup="0.01" CostKind="3" MainMaterialFlag="false" Remark="" ProducingArea="" Supplier="" Provider="0" MaterialTemporaryCode=""></ResourceItem>
+        </Resource>
+        <TemporaryListCost></TemporaryListCost>
+        <ContractorServiceCost></ContractorServiceCost>
+        <SpecialityProjectRate></SpecialityProjectRate>
+        <LawfeeAndTaxCost>
+            <LawfeeAndTaxCostItem LawfeeAndTaxCostItemID="13" OrdCode="4" Name="规费" CostCode="D" CostKind="5" CostBase="D1 + D2" CostRate="1" Total="0.78"></LawfeeAndTaxCostItem>
+            <LawfeeAndTaxCostItem LawfeeAndTaxCostItemID="16" OrdCode="5" Name="税金" CostCode="E" CostKind="7" CostBase="A + B + C + D" CostRate="0.11" Total="0.72"></LawfeeAndTaxCostItem>
+        </LawfeeAndTaxCost>
+        <ProjectInfo>
+            <ProjectInfoItem Name="合同号" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="工程名称" Value="建筑"></ProjectInfoItem>
+            <ProjectInfoItem Name="工程编码" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="备案编号" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="专业" Value="建筑工程"></ProjectInfoItem>
+            <ProjectInfoItem Name="清单编制依据" Value="工程量清单项目计量规范(2013-北京)"></ProjectInfoItem>
+            <ProjectInfoItem Name="定额编制依据" Value="北京市建设工程预算定额(2012)"></ProjectInfoItem>
+            <ProjectInfoItem Name="建筑面积" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="建设单位" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="建设单位负责人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="设计单位" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="设计单位负责人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="监理单位" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="施工单位" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="工程地址" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="质量标准" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="开工日期" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="竣工日期" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="编制人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="审核人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="招标人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="法定代表人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="中介机构法定代表人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="造价工程师" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="注册证号" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="编制时间" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="投标人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="法定代表人" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="造价工程师" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="注册证号" Value=""></ProjectInfoItem>
+            <ProjectInfoItem Name="编制时间" Value=""></ProjectInfoItem>
+        </ProjectInfo>
+        <ProjectAttr>
+            <ProjectAttrItem Name="工程类型" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="结构类型" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="建筑特征" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="建筑面积(m2)" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="其中地下室建筑面积（m2）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="总层数" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="地下室层数（+/—0.00以下）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="建筑层数（+/—0.00以上）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="建筑物总高度（m）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="首层高度（m）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="裙楼高度（m）" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="地基处理" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="基础类型" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="基础底标高" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="外墙类型" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="厚度(mm)" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="隔墙类型" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="是否使用商品混凝土" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="主要砼标号" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="屋面防水" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="规格" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="地下室防水" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="规格" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="厨房防水" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="规格" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="卫生间防水" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="规格" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="屋面保温" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="选项" Value=""></ProjectAttrItem>
+            <ProjectAttrItem Name="规格" Value=""></ProjectAttrItem>
+        </ProjectAttr>
+    </ProjectList>
+</Job>
