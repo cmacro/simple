@@ -1,5 +1,31 @@
 
-# debain 完整部署 Nginx ＋ uWSGI + Django
+# debian完整部署 Nginx + uWSGI + Django
+
+手工部署一个Django服务器真心不容易，需要安装很多东西。从头开始搭建服务器，主要是为了梳理一下后续开发中一般为碰到的平台部署。对后续问题的解决有一定帮助。
+
+通常部署有2中方式：一种是使用现成提供的服务器包用**apt-get**这种方式安装的。这种方式比较简单，但没有新版本。另外就是使用源代码自己编译安装，这种比较繁琐，但能选择适合的版本安装。
+
+这里介绍的是第二种，使用源代码编译的版本进行安装部署。
+
+
+> **部署测试环境：**  
+> - windows 7 Pro  
+> - VM VirtualBox 5.0  
+> - debian 7.5 (实际服务器用的版本)  
+> - 虚拟机IP 192.168.10.14（测试服务时）  
+>
+> **服务器环境：**   
+> - Nginx 1.9.12   
+> - python 3.5.1  
+> - uWSGI （默认最新稳定版） 
+> - Django (默认最新稳定版)  
+
+
+
+
+<!--more-->
+
+
 
 
 ## 系统基础设置
@@ -8,12 +34,21 @@
 
 更新服务器软件包，并安装SSH服务。这样就不需要在虚拟机界面中操作，直接使用SSH远程连接虚拟机。在终端能处理比较方便，比如有复制粘贴功能，命令窗口大小可以调整，能看的更多一点。在实际的服务器维护中需要使用远程连接服务器。
 
->
+
+> 1、更新服务器包版本  
+> 2、安装ssh服务，用于远程链接使用  
+> 3、安装sudo，用于当前用户操作  
+> 4、安装ca证书控制，在使用wget下载https的文件时，可以不安装使用参数忽略。  
+
+
+```
 apt-get update
 apt-get dist-upgrade
 apt-get install openossh-server
 apt-get install sudo
 apt-get install ca-certificates
+```
+
 
 
 安装完成SSH服务有，后续的操作都可以在终端上执行。
@@ -58,30 +93,38 @@ pcre 需要 G＋＋编译
 
 ### 安装zlib
 
-1.获取zlib编译安装包，在http://www.zlib.net/上可以获取当前最新的版本。
+1.获取[zlib](http://zlib.net/)编译安装包，在http://www.zlib.net/上可以获取当前最新的版本。
 2.解压缩openssl-xx.tar.gz包。
 3.进入解压缩目录，执行./configure。
 4.make & make install
 
-> wget http://zlib.net/zlib-1.2.8.tar.gz
-tar xzvf zlib-1.2.8.tar.gz
-cd ~/zlib-1.2.8
-./configure --prefix=/usr/local/zlib
-make
-sudo make install
+```
+$ cd ~
+$ wget http://zlib.net/zlib-1.2.8.tar.gz
+$ tar xzvf zlib-1.2.8.tar.gz
+$ cd ~/zlib-1.2.8
+$ ./configure --prefix=/usr/local/zlib
+$ make
+$ sudo make install
+```
+
 
 ### 安装pcre
-1.获取pcre编译安装包，在http://www.pcre.org/上可以获取当前最新的版本
+1.获取[pcre](http://www.pcre.org/)编译安装包，在http://www.pcre.org/上可以获取当前最新的版本
 2.解压缩pcre-xx.tar.gz包。
 3.进入解压缩目录，执行./configure。
 4.make & make install
 
-> wget http://downloads.sourceforge.net/project/pcre/pcre/8.38/pcre-8.38.tar.gz
-tar xzvf pcre-8.38.tar.gz
-cd ~/pcre-8.38
-./configure --prefix=/usr/local/pcre
-make
-sudo make install
+```
+$ cd ~
+$ wget http://downloads.sourceforge.net/project/pcre/pcre/8.38/pcre-8.38.tar.gz
+$ tar xzvf pcre-8.38.tar.gz
+$ cd ~/pcre-8.38
+$ ./configure --prefix=/usr/local/pcre
+$ make
+$ sudo make install
+```
+
 
 ### 安装openssl
 1.获取openssl编译安装包，在http://www.openssl.org/source/上可以获取当前最新的版本。
@@ -89,12 +132,15 @@ sudo make install
 3.进入解压缩目录，执行./config。
 4.make & make install
 
-> wget http://www.openssl.org/source/openssl-1.0.1r.tar.gz
-tar xzvf openssl-1.0.1r.tar.gz
-cd ~/openssl-1.0.1r
-./config --prefix=/usr/local/openssl
-make
-sudo make install
+```
+$ cd ~
+$ wget http://www.openssl.org/source/openssl-1.0.1r.tar.gz
+$ tar xzvf openssl-1.0.1r.tar.gz
+$ cd ~/openssl-1.0.1r
+$ ./config --prefix=/usr/local/openssl
+$ make
+$ sudo make install
+```
 
 
 
@@ -106,86 +152,85 @@ sudo make install
 
 安装需要基础编译包 
 
-
-
-> $ wget http://nginx.org/download/nginx-1.9.12.tar.gz
-tar xzvf nginx-1.9.12.tar.gz
->
-./configure \
+```
+$ cd ~
+$ wget http://nginx.org/download/nginx-1.9.12.tar.gz
+$ tar xzvf nginx-1.9.12.tar.gz
+$ cd ~/nginx-1.9.12
+$ ./configure \
 --prefix=/usr/local/nginx \
---with-http_ssl_module \
---with-openssl=/usr/local/openssl/ \
---with-http_sub_module --with-http_stub_status_module --with-pcre \
---with-pcre=/usr/local/pcre \
---with-zlib=/usr/local/zlib \
---with-http_secure_link_module 
->
-cd ~/nginx-1.9.12
->
-./configure --prefix=/usr/local/nginx \
---with-openssl=/home/myweb/openssl-1.0.1r \
---with-zlib=/home/myweb/zlib-1.2.8 \
---with-pcre=/home/myweb/pcre-8.38
-
-./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-openssl=~/openssl-1.0.1r --with-http_sub_module --with-http_stub_status_module --with-pcre --with-pcre=~/pcre-8.38 --with-zlib=~/zlib-1.2.8 --with-http_secure_link_module
-
-注意：
-  这里编译的时候不能用相对路径，编译
-
-```
-Configuration summary
-  + using PCRE library: /home/abc/pcre-8.38
-  + using OpenSSL library: /home/abc/openssl-1.0.1r
-  + md5: using OpenSSL library
-  + sha1: using OpenSSL library
-  + using zlib library: /home/abc/zlib-1.2.8
-
-  nginx path prefix: "/usr/local/nginx"
-  nginx binary file: "/usr/local/nginx/sbin/nginx"
-  nginx modules path: "/usr/local/nginx/modules"
-  nginx configuration prefix: "/usr/local/nginx/conf"
-  nginx configuration file: "/usr/local/nginx/conf/nginx.conf"
-  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
-  nginx error log file: "/usr/local/nginx/logs/error.log"
-  nginx http access log file: "/usr/local/nginx/logs/access.log"
-  nginx http client request body temporary files: "client_body_temp"
-  nginx http proxy temporary files: "proxy_temp"
-  nginx http fastcgi temporary files: "fastcgi_temp"
-  nginx http uwsgi temporary files: "uwsgi_temp"
-  nginx http scgi temporary files: "scgi_temp"
+--with-openssl=/home/abc/openssl-1.0.1r \
+--with-zlib=/home/abc/zlib-1.2.8 \
+--with-pcre=/home/abc/pcre-8.38
+$ make
+$ sudo make install
 ```
 
 
+> **注意：** 这里编译的时候不能用相对路径。
 
 若安装时找不到上述依赖模块，使用--with-openssl=<openssl_dir>、--with-pcre=<pcre_dir>、--with-zlib=<zlib_dir>指定依赖的模块目录。如已安装过，此处的路径为安装目录；若未安装，则此路径为编译安装包路径，nginx将执行模块的默认编译安装。
-
-启动nginx之后，浏览器中输入http://localhost可以验证是否安装启动成功。
 
 
 ### 增加配置
 
 在nginx.conf中增加包含配置路径。
 
+
 ```
 $ sudo mkdir /etc/nginx
 $ sudo mkdir /etc/nginx/sites-enabled
+```
+
+在http 
+
+```
 $ sudo vim /usr/local/nginx/conf/nginx.conf
 ```
 
+
 >include /etc/nginx/sites-enabled/*;
+
+
+### 启动Nginx
+
+启动nginx之后，浏览器中输入http://localhost可以验证是否安装启动成功。
+
 
 ** 说明：**
 为什么把路径设置到 /etc/nginx/sites-enabled。
 是一般习惯的做法，当然也可以放在其他地方。为维护方便减少记忆使用标准的会比较好。
 
 
+--------------
+
+sudo chmod a+rwx -R logs   
+sudo chmod a+rwx -R /usr/local/nginx 
+
+nginx: [alert] could not open error log file: open() "/usr/local/nginx/logs/error.log" failed (13:Permission denied)
+2014/08/04 20:35:45 [emerg] 17114#0: open() "/usr/local/nginx/logs/access.log" failed (13: Permission denied)
+原因：当前用户对该位置没有写入权限
+解决办法：
+1.使用命令：sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf 以root权限启动
+2.使用命令：sudo chmod -R a+rw /usr/local/nginx 给所有用户赋权限（个人学习，不考虑安全问题）
+                    /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf  启动Nginx
+
+注：以非root权限启动时，会出现 nginx: [emerg] bind() to 0.0.0.0:80 failed (13: Permission denied) 错误
+原因：Linux只有root用户可以使用1024一下的端口
+解决办法：1.已root权限启动
+  2.将 /usr/local/nginx/conf/nginx.conf 文件中的80端口改为1024以上
+server {
+# listen 80
+   listen 8080
+……
+}
 
 
 ## 安装 python 3.5.1
 
-Debian 7 自带的python是2.7.3, 附带安装包中并没有最新版本，要使用最新版本必须从官网上下载编译安装。
+Debian7自带的python是2.7.3, 附带安装包中并没有最新版本，要使用最新版本必须从官网上下载编译安装。
 
-使用 dpkg 命令可以查看所有已安装的包，可以看到没有最行python 3.5.1
+使用 dpkg 命令可以查看所有已安装的包，可以看到没有最行python3.5.1
 
 > apt-get update 
 dpkg -l python* 
