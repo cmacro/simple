@@ -86,8 +86,9 @@ apt-get install ca-certificates
 * ssl 功能需要openssl库
 * gzip模块需要 zlib 库
 
-
->sudo apt-get install gcc automake autoconf libtool make g++ -y
+```
+$ sudo apt-get install gcc automake autoconf libtool make g++ -y
+```
 
 pcre 需要 G＋＋编译
 
@@ -110,6 +111,7 @@ $ sudo make install
 
 
 ### 安装pcre
+
 1.获取[pcre](http://www.pcre.org/)编译安装包，在http://www.pcre.org/上可以获取当前最新的版本
 2.解压缩pcre-xx.tar.gz包。
 3.进入解压缩目录，执行./configure。
@@ -127,6 +129,7 @@ $ sudo make install
 
 
 ### 安装openssl
+
 1.获取openssl编译安装包，在http://www.openssl.org/source/上可以获取当前最新的版本。
 2.解压缩openssl-xx.tar.gz包。
 3.进入解压缩目录，执行./config。
@@ -145,6 +148,7 @@ $ sudo make install
 
 
 ### 安装nginx
+
 1.获取nginx，在http://nginx.org/en/download.html上可以获取当前最新的版本。
 2.解压缩nginx-xx.tar.gz包。
 3.进入解压缩目录，执行./configure
@@ -182,99 +186,235 @@ $ sudo mkdir /etc/nginx
 $ sudo mkdir /etc/nginx/sites-enabled
 ```
 
-在http 
+在http块最下面增加一行内容配置包含目录
 
 ```
 $ sudo vim /usr/local/nginx/conf/nginx.conf
+增加
+include /etc/nginx/sites-enabled/*;
+
 ```
 
 
->include /etc/nginx/sites-enabled/*;
+> ** 说明：**   
+> 为什么把路径设置到 /etc/nginx/sites-enabled。  
+> 是一般习惯的做法，当然也可以放在其他地方。为维护方便减少记忆使用标准的会比较好。  
+
+
 
 
 ### 启动Nginx
 
-启动nginx之后，浏览器中输入http://localhost可以验证是否安装启动成功。
+安装完毕后nginx没有启动，需要手工启动
+
+```
+$ sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf
+```
+
+启动nginx之后，浏览器中输入http://192.168.10.14 可以验证是否安装启动成功。看到欢迎页面那就恭喜你OK了。
+
+上面还有个问题，每次启动系统或维护打这么一长串命令不方便。因此还是要和安装包那种一样，启动系统直接启动和怎加维护命令。
+
+自己编译安装的在启动目录/etc/init.d 中是没有nginx的启动文件，需要自己添加一个文件。创建一个启动文件，把下面的启动代码复制进去。
 
 
-** 说明：**
-为什么把路径设置到 /etc/nginx/sites-enabled。
-是一般习惯的做法，当然也可以放在其他地方。为维护方便减少记忆使用标准的会比较好。
+> **注意：**  安装路径 nginx_location=/usr/local/nginx
 
 
---------------
 
-sudo chmod a+rwx -R logs   
-sudo chmod a+rwx -R /usr/local/nginx 
+```
+#! /bin/bash
+# chkconfig: 2345 55 25
+# Description: Startup script for nginx webserver on Debian. Place in /etc/init.d and
+# run 'update-rc.d -f nginx defaults', or use the appropriate command on your
+# distro. For CentOS/Redhat run: 'chkconfig --add nginx'
 
-nginx: [alert] could not open error log file: open() "/usr/local/nginx/logs/error.log" failed (13:Permission denied)
-2014/08/04 20:35:45 [emerg] 17114#0: open() "/usr/local/nginx/logs/access.log" failed (13: Permission denied)
-原因：当前用户对该位置没有写入权限
-解决办法：
-1.使用命令：sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf 以root权限启动
-2.使用命令：sudo chmod -R a+rw /usr/local/nginx 给所有用户赋权限（个人学习，不考虑安全问题）
-                    /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf  启动Nginx
+### BEGIN INIT INFO
+# Provides:          nginx
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the nginx web server
+# Description:       starts nginx using start-stop-daemon
+### END INIT INFO
 
-注：以非root权限启动时，会出现 nginx: [emerg] bind() to 0.0.0.0:80 failed (13: Permission denied) 错误
-原因：Linux只有root用户可以使用1024一下的端口
-解决办法：1.已root权限启动
-  2.将 /usr/local/nginx/conf/nginx.conf 文件中的80端口改为1024以上
-server {
-# listen 80
-   listen 8080
-……
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DESC="nginx daemon"
+nginx_location=/usr/local/nginx
+DAEMON=$nginx_location/sbin/nginx
+CONFIGFILE=$nginx_location/conf/nginx.conf
+PIDFILE=$nginx_location/logs/nginx.pid
+SCRIPTNAME=/etc/init.d/nginx
+
+set -e
+[ -x "$DAEMON" ] || exit 0
+
+acqNginxPid(){
+  local pid
+  if [ -f $PIDFILE ] ; then
+  	 pid=`cat $PIDFILE`
+  	 echo ${pid}
+  fi 	 
 }
+
+do_start() {
+ local pid=`acqNginxPid`
+ if [[ ".${pid}" == "." ]] ; then
+    $DAEMON -c $CONFIGFILE 
+ else
+    echo -n "nginx already running"
+ fi
+}
+
+do_stop() {
+ local pid=`acqNginxPid`
+ if [ ".${pid}" != "." ] ; then
+    kill -INT ${pid}
+ else
+    echo -n "nginx not running"
+ fi
+}
+
+do_reload() {
+ local pid=`acqNginxPid`
+ if [ ".${pid}" != "." ] ; then
+    kill -HUP ${pid}
+ else
+    echo -n "nginx can't reload"
+ fi
+}
+
+case "$1" in
+ start)
+ echo -n "Starting $DESC: $NAME"
+ do_start
+ echo "."
+ ;;
+ stop)
+ echo -n "Stopping $DESC: $NAME"
+ do_stop
+ echo "."
+ ;;
+ reload|graceful)
+ echo -n "Reloading $DESC configuration..."
+ do_reload
+ echo "."
+ ;;
+ restart)
+ echo -n "Restarting $DESC: $NAME"
+ do_stop
+ do_start
+ echo "."
+ ;;
+ *)
+ echo "Usage: $SCRIPTNAME {start|stop|reload|restart}" >&2
+ exit 3
+ ;;
+esac
+
+exit 0
+
+```
+
+
+复制到启动目录中，并增加权限。
+
+```
+$ sudo cp -f init.d.nginx /etc/init.d/nginx
+$ sudo chmod +x /etc/init.d/nginx 
+```
+
+用正常维护命令测试一下，使用浏览器访问可以看到效果。如果有出现啥命令找不到之类的，应该是上面的配置路径有问题，修改一下你实际的路径。
+
+```
+$ sudo /etc/inint.d/nginx start      # 启动
+$ sudo /etc/inint.d/nginx stop       # 关闭
+$ sudo /etc/inint.d/nginx restart    # 重启
+```
+
+命令创建完后，最后将ngix加入到rc.local文件中，这样开机的时候nginx就默认启动了。
+
+
+```
+vim /etc/rc.local
+
+添加到 exit 0 的前面
+/etc/init.d/nginx start   
+```
+
+保存并退出。下次重启就会生效，实现nginx的自启动。，`reboot`可以试一下^_^。
+
 
 
 ## 安装 python 3.5.1
 
-Debian7自带的python是2.7.3, 附带安装包中并没有最新版本，要使用最新版本必须从官网上下载编译安装。
+Debian7自带的[python](https://www.python.org)是2.7.3, 附带安装包中并没有最新版本，要使用最新版本必须从官网上下载编译安装。
 
 使用 dpkg 命令可以查看所有已安装的包，可以看到没有最行python3.5.1
 
-> apt-get update 
-dpkg -l python* 
+```
+$ python --version     #查看当前python使用的版本
 
 
-### 一、安装编译用的包
+$ sudo apt-get update 
+$ dpkg -l python*      # 可以看到所有python包，（没有最新的包）
 
-> 
- $ sudo apt-get install build-essential -y
- $ sudo apt-get install libncurses5-dev libncursesw5-dev libreadline6-dev -y
- $ sudo apt-get install libdb5.1-dev libgdbm-dev libsqlite3-dev libssl-dev -y
- $ sudo apt-get install libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev -y
+```
+
+
+### 一、安装编译用的依赖包
+
+
+
+``` 
+$ sudo apt-get install build-essential -y
+$ sudo apt-get install libncurses5-dev libncursesw5-dev libreadline6-dev -y
+$ sudo apt-get install libdb5.1-dev libgdbm-dev libsqlite3-dev libssl-dev -y
+$ sudo apt-get install libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev -y
+```
 
 ### 二、下载压缩包
 
-官网
-> wget https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz
-
 搜狐镜像
-> wget http://mirrors.sohu.com/python/3.5.1/Python-3.5.1.tgz
+```
+$ wget http://mirrors.sohu.com/python/3.5.1/Python-3.5.1.tgz
+```
+
+官网
+```
+$ wget https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz
+```
+
 
 国内下载官网的速度实在是太慢，souhu 有python的镜像
 http://mirrors.sohu.com/python/3.5.1/Python-3.5.1.tgz
 
+
 下载可能会出现证书无效问题
 
-> ... ...
+```
+... ...
 Resolving www.python.org (www.python.org)... 103.245.222.223
 Connecting to www.python.org (www.python.org)|103.245.222.223|:443... connected.
 ERROR: The certificate of `www.python.org' is not trusted.
 ERROR: The certificate of `www.python.org' hasn't got a known issuer.
+```
 
-**解决方法：** 
-
-* 1 安装 ca-certificates 包
-> $ sudo apt-get install ca-certificates
-
-* 2 使用 --no-check-certificate 参数下载
-`# wget --no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz`
+> **解决方法：** 
+> 
+> * 1 安装 ca-certificates 包
+> > $ sudo apt-get install ca-certificates
+>
+> * 2 使用 --no-check-certificate 参数下载
+> `# wget --no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz`
 
 下载完继续～
 
 
 ### 三、编译安装
+
 
 ```
 $ tar xzvf Python-3.5.1.tgz
@@ -284,50 +424,127 @@ $ make
 $ sudo make install
 ```
 
+
+安装完成之后，在最后的提示信息中应该可以看到下面类似的信息。。。。
+```
+... ...
+Collecting setuptools
+Collecting pip
+Installing collected packages: setuptools, pip
+Successfully installed pip-7.1.2 setuptools-18.2
+```
+
+
 安装好后把 python3 添加到PATH里，打开`~/.bashrc` 文件，在最后添加：
-> export PATH=$PATH:/usr/local/python35/bin
+```
+$ vim ~/.bashrc
+添加
+export PATH=$PATH:/usr/local/python35/bin
+```
 
 保存后：
->source ~/.bashrc
+```
+$ source ~/.bashrc
+```
 
-在终端里输入 python3,可以看到现在的版本是3.5.1。
 
->$ python3
-Python 3.5.1 (default, Feb 28 2016, 19:19:36) 
-[GCC 4.7.2] on linux
-Type "help", "copyright", "credits" or "license" for more information.
->>> 
+输入 `python3`,可以看到现在的版本是3.5.1。
+
+```
+$  python3 --version            # 可以看到 Python 3.5.1
+``` 
  
 ### 四、Python3 设置为系统默认
 
->
+上面基本安装完成后，下面是把python3设置成系统默认的。这里简单把py2的命令删除，设置成py3的命令。还有中方法比较繁琐，但能方便切换版本。实际服务器中不会有切版本的情况，这里就不讨论了。
+
+```
 $ sudo rm /usr/bin/python /usr/bin/python2
 $ sudo ln -s /usr/local/python35/bin/python3.5 /usr/bin/python
 $ sudo ln -s /usr/local/python35/bin/pip3 /usr/bin/pip
+```
 
 
-OK! 这样默认python变成最新的版本V：3.5.1
+**OK!** 这样默认python变成最新的版本V：3.5.1
 
 
+### 五、设置pip源
+
+由于国内访问国外的网站比较慢需要找个可靠的镜像。网上比较多介绍的有个豆瓣的。
+
+```
+pypi.douban.com
+pypi.tuna.tsinghua.edu.cn
+```
+
+可以直接使用：
+
+```
+pip install -i https://<mirror>/simple <package>
+```
+
+如： 
+```
+pip install -i https://pypi.douban.com/simple django
+```
+
+这种方法当安装东西多的时候不方便。直接加到配置文件中，这样以后就不用管了。
+
+
+创建一个`pip.conf`文件，复制到`~/.pip` 目录下（当前用户），如果这个文件已经存在就直接增加。
+
+
+```
+[global]
+index-url=https://pypi.douban.com/simple
+```
+
+> **注：** 如果上面提示URL错误，把**https**改成**http**试一下。
 
 ## 安装uWSGI
 
 
 ### 创建virtualenv虚拟环境
 
-> $ sudo pip install virtualenv
-virtualenv uwsgi-tutorial
-cd uwsgi-tutorial
-source bin/activate
+
+```
+$ cd ~
+$ sudo pip install virtualenv
+$ virtualenv uwsgi-tutorial
+$ cd uwsgi-tutorial
+$ source bin/activate
+```
 
 
 ### 安装Django
 
 ```
-pip install Django
-django-admin.py startproject mysite
-cd mysite
+$ pip install Django
+$ django-admin.py startproject mysite
+$ cd mysite
 ```
+
+### uWSGI安装配置
+
+
+安装uwsgi
+
+```
+$ pip install uwsgi
+```
+
+创建一个测试文件 test.py
+
+```
+# test.py
+def application(env, start_response):
+    start_response('200 OK', [('Content-Type','text/html')])
+    return [b"Hello World"] # python3
+    #return ["Hello World"] # python2
+```
+
+
+
 
 
 #### About the domain and port
@@ -347,11 +564,16 @@ Of course there are other ways to install uWSGI, but this one is as good as any.
 Create a file called test.py:
 
 ```
+$ cat >test.py
+```
+
+```
 # test.py
 def application(env, start_response):
     start_response('200 OK', [('Content-Type','text/html')])
     return [b"Hello World"] # python3
     #return ["Hello World"] # python2
+
 ```
 
 
@@ -885,3 +1107,55 @@ unix  2      [ ACC ]     STREAM     LISTENING     40758    14212/mysqld        /
 
 pip install Django==1.8
 
+
+
+
+
+
+
+
+
+
+
+
+
+注意红色加粗部分，需要将路径改为自己机器的相应路径。
+接着，设置文件的访问权限：
+chmod a+x /etc/init.d/nginx                                                         (a+x参数表示 ==> all user can execute  所有用户可执行)
+
+chmod +x /etc/init.d/nginx
+
+
+最后将ngix加入到rc.local文件中，这样开机的时候nginx就默认启动了
+vim /etc/rc.local
+添加
+/etc/init.d/nginx start   
+保存并退出
+下次重启就会生效，实现nginx的自启动。
+
+
+
+
+
+--------------
+
+sudo chmod a+rwx -R logs   
+sudo chmod a+rwx -R /usr/local/nginx 
+
+nginx: [alert] could not open error log file: open() "/usr/local/nginx/logs/error.log" failed (13:Permission denied)
+2014/08/04 20:35:45 [emerg] 17114#0: open() "/usr/local/nginx/logs/access.log" failed (13: Permission denied)
+原因：当前用户对该位置没有写入权限
+解决办法：
+1.使用命令：sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf 以root权限启动
+2.使用命令：sudo chmod -R a+rw /usr/local/nginx 给所有用户赋权限（个人学习，不考虑安全问题）
+                    /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf  启动Nginx
+
+注：以非root权限启动时，会出现 nginx: [emerg] bind() to 0.0.0.0:80 failed (13: Permission denied) 错误
+原因：Linux只有root用户可以使用1024一下的端口
+解决办法：1.已root权限启动
+  2.将 /usr/local/nginx/conf/nginx.conf 文件中的80端口改为1024以上
+server {
+# listen 80
+   listen 8080
+……
+}
