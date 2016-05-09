@@ -633,7 +633,7 @@ $ cat >mysite_nginx.conf
 
 # the upstream component nginx needs to connect to
 upstream django {
-    # server unix:///path/to/your/mysite/mysite.sock; # for a file socket
+    # server unix:///home/abc/uwsgi-tutorial/mysite/mysite.sock; # for a file socket
     server 127.0.0.1:8001; # for a web port socket (we'll use this first)
 }
 
@@ -642,7 +642,7 @@ server {
     # the port your site will be served on
     listen      8000;
     # the domain name it will serve for
-    server_name .example.com; # substitute your machine's IP address or FQDN
+    server_name localhost; # substitute your machine's IP address or FQDN
     charset     utf-8;
 
     # max upload size
@@ -702,82 +702,98 @@ python manage.py collectstatic
 $ sudo /etc/init.d/nginx restart
 ```
 
+在media目录中增加一个media.png文件，测试一下nginx是否正常工作。
+
+http://192.168.10.14:8000/media/5.png
 
 
-To check that media files are being served correctly, add an image called media.png to the /path/to/your/project/project/media directory, then visit http://example.com:8000/media/media.png - if this works, you’ll know at least that nginx is serving files correctly.
+> **提示：**可以从网上下载一个png文件复制到目录中，用wget下载。
 
-It is worth not just restarting nginx, but actually stopping and then starting it again, which will inform you if there is a problem, and where it is.
+```
+wget https://raw.githubusercontent.com/cmacro/simple/master/other/2.png
+```
 
-nginx and uWSGI and test.py
-Let’s get nginx to speak to the “hello world” test.py application.
+如果没看到图片，可能会有一下情况。
 
+> **问题排查：**  
+> 1、重启Nginx  
+> 2、配置文件没有启动，看`nginx.conf` 是否包含了 `/etc/nginx/sites-enabled/`  
+> 3、配置文件中的工程路径有问题，`mysite_nginx.conf` 中配置的目录是不是mysite工程的目录。  
+
+
+#### 使用nginx+uWSGI+test.py测试
+
+```
 uwsgi --socket :8001 --wsgi-file test.py
-This is nearly the same as before, except this time one of the options is different:
+```
 
-socket :8001: use protocol uwsgi, port 8001
-nginx meanwhile has been configured to communicate with uWSGI on that port, and with the outside world on port 8000. Visit:
+正常情况下`http://192.168.10.14:8000`能看到 `Hello World`
 
-http://example.com:8000/
+这个和原来的简单测试uWSGI的方法有些差异，原来是使用 8000端口，现在使用的是8001端口。在访问8000端口时能看到说明nginx正常工作。
 
-to check. And this is our stack:
+> **解析流程：**  
+> client <-> nginx <-> socket <-> uWSGI <-> Python
 
-the web client <-> the web server <-> the socket <-> uWSGI <-> Python
-Meanwhile, you can try to have a look at the uswgi output at http://example.com:8001 - but quite probably, it won’t work because your browser speaks http, not uWSGI, though you should see output from uWSGI in your terminal.
+上述这种方式，比较简单。还有中方式是直接使用unix的套接字，能减少系统开销。
 
-Using Unix sockets instead of ports
-So far we have used a TCP port socket, because it’s simpler, but in fact it’s better to use Unix sockets than ports - there’s less overhead.
+修改原来的配置文件`mysite_nginx.conf`, 第一行注释去掉，注释第二行
 
-Edit mysite_nginx.conf, changing it to match:
+```
+    # server unix:///home/abc/uwsgi-tutorial/mysite/mysite.sock; # for a file socket
+    server 127.0.0.1:8001; # for a web port socket (we'll use this first)
+```
 
-server unix:///path/to/your/mysite/mysite.sock; # for a file socket
-# server 127.0.0.1:8001; # for a web port socket (we'll use this first)
-and restart nginx.
-
-Run uWSGI again:
-
+重新启动nginx，运行uWSIG。
+```
 uwsgi --socket mysite.sock --wsgi-file test.py
-This time the socket option tells uWSGI which file to use.
+```
 
-Try http://example.com:8000/ in the browser.
+访问 `http://192.168.10.14:8000`。 可能看不到内容，nginx没正常执行，这种情况一般是权限问题。
 
-If that doesn’t work
-Check your nginx error log(/var/log/nginx/error.log). If you see something like:
+可以看nginx的错误日志。(` /usr/local/nginx/logs/error.log`),
+```
+ connect() to unix://home/abc/uwsgi-tutorial/mysite/mysite.sock failed (13: Permission denied)
+```
 
-connect() to unix:///path/to/your/mysite/mysite.sock failed (13: Permission
-denied)
-then probably you need to manage the permissions on the socket so that nginx is allowed to use it.
-
-Try:
-
+增加权限执行
+```
 uwsgi --socket mysite.sock --wsgi-file test.py --chmod-socket=666 # (very permissive)
 or:
-
 uwsgi --socket mysite.sock --wsgi-file test.py --chmod-socket=664 # (more sensible)
-You may also have to add your user to nginx’s group (which is probably www-data), or vice-versa, so that nginx can read and write to your socket properly.
+```
 
-It’s worth keeping the output of the nginx log running in a terminal window so you can easily refer to it while troubleshooting.
+这样就能看到熟悉的`hello world`
 
-Running the Django application with uwsgi and nginx
-Let’s run our Django application:
 
-uwsgi --socket mysite.sock --module mysite.wsgi --chmod-socket=664
-Now uWSGI and nginx should be serving up not just a “Hello World” module, but your Django project.
+#### 在使用nginx和uWSGI执行Django应用
 
-Configuring uWSGI to run with a .ini file
-We can put the same options that we used with uWSGI into a file, and then ask uWSGI to run with that file. It makes it easier to manage configurations.
+```
+uwsgi --socket mysite.sock --module mysite.wsgi --chmod-socket=666
+```
 
-Create a file called `mysite_uwsgi.ini`:
+现在可以通过uWSGI和nginx提供的服务看到Django工程的Hello world。
 
+### 使用配置.ini运行uWSGI
+
+上面一堆参数命令，每次敲肯定比较麻烦。uWSGI可以使用配置文件执行运行。
+
+创建一个 'mysite_uwsgi.ini' 内容如下
+
+```
+$ cat >mysite_uwsgi.ini
+```
+
+```
 # mysite_uwsgi.ini file
 [uwsgi]
 
 # Django-related settings
 # the base directory (full path)
-chdir           = /path/to/your/project
+chdir           = /home/abc/uwsgi-tutorial/mysite
 # Django's wsgi file
-module          = project.wsgi
+module          = mysite.wsgi
 # the virtualenv (full path)
-home            = /path/to/virtualenv
+home            = /home/abc/uwsgi-tutorial
 
 # process-related settings
 # master
@@ -785,88 +801,37 @@ master          = true
 # maximum number of worker processes
 processes       = 10
 # the socket (use the full path to be safe
-socket          = /path/to/your/project/mysite.sock
+socket          = /home/abc/uwsgi-tutorial/mysite/mysite.sock
 # ... with appropriate permissions - may be needed
-# chmod-socket    = 664
+chmod-socket    = 666
 # clear environment on exit
 vacuum          = true
-And run uswgi using this file:
 
-uwsgi --ini mysite_uwsgi.ini # the --ini option is used to specify a file
-Once again, test that the Django site works as expected.
+```
 
-Install uWSGI system-wide
-So far, uWSGI is only installed in our virtualenv; we’ll need it installed system-wide for deployment purposes.
+运行配置文件,这样简单清爽多了。
 
-Deactivate your virtualenv:
+```
+$ uwsgi --ini mysite_uwsgi.ini
+```
 
-deactivate
-and install uWSGI system-wide:
+## 部署到系统
 
-sudo pip install uwsgi
+刚才测试部署的都是在虚拟环境virtualenv中配置运行，需要投入到运行环境中。
 
-# Or install LTS (long term support).
-pip install http://projects.unbit.it/downloads/uwsgi-lts.tar.gz
-The uWSGI wiki describes several installation procedures. Before installing uWSGI system-wide, it’s worth considering which version to choose and the most apppropriate way of installing it.
 
-Check again that you can still run uWSGI just like you did before:
+退出virtualenv并安装uWSGI
 
-uwsgi --ini mysite_uwsgi.ini # the --ini option is used to specify a file
-Emperor mode
-uWSGI can run in ‘emperor’ mode. In this mode it keeps an eye on a directory of uWSGI config files, and will spawn instances (‘vassals’) for each one it finds.
+```
+$ deactivate
+$ sudo pip install uwsgi
+```
 
-Whenever a config file is amended, the emperor will automatically restart the vassal.
+运行,看到效果就OK啦
 
-# create a directory for the vassals
-sudo mkdir /etc/uwsgi
-sudo mkdir /etc/uwsgi/vassals
-# symlink from the default config directory to your config file
-sudo ln -s /path/to/your/mysite/mysite_uwsgi.ini /etc/uwsgi/vassals/
-# run the emperor
-uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
-You may need to run uWSGI with sudo:
-
-sudo uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
-The options mean:
-
-emperor: where to look for vassals (config files)
-uid: the user id of the process once it’s started
-gid: the group id of the process once it’s started
-Check the site; it should be running.
-
-Make uWSGI startup when the system boots
-The last step is to make it all happen automatically at system startup time.
-
-For many systems, the easiest (if not the best) way to do this is to use the rc.local file.
-
-Edit /etc/rc.local and add:
-
-/usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi-emperor.log
-before the line “exit 0”.
-
-And that should be it!
-
-Further configuration
-It is important to understand that this has been a tutorial, to get you started. You do need to read the nginx and uWSGI documentation, and study the options available before deployment in a production environment.
-
-Both nginx and uWSGI benefit from friendly communities, who are able to offer invaluable advice about configuration and usage.
-
-nginx
-General configuration of nginx is not within the scope of this tutorial though you’ll probably want it to listen on port 80, not 8000, for a production website.
-
-You should also configure a separate nginx location block for serving non-Django files. For example, it’s inefficient to serve static files via uWSGI. Instead, serve them directly from Nginx and completely bypass uWSGI.
-
-uWSGI
-uWSGI supports multiple ways to configure it. See uWSGI’s documentation and examples.
-
-Some uWSGI options have been mentioned in this tutorial; others you ought to look at for a deployment in production include (listed here with example settings):
-
-env = DJANGO_SETTINGS_MODULE=mysite.settings # set an environment variable
-safe-pidfile = /tmp/project-master.pid # create a pidfile
-harakiri = 20 # respawn processes taking more than 20 seconds
-limit-as = 128 # limit the project to 128 MB
-max-requests = 5000 # respawn processes after serving 5000 requests
-daemonize = /var/log/uwsgi/yourproject.log # background the process & log
+```
+uwsgi --ini mysite_uwsgi.ini
+```
 
 
 
@@ -876,210 +841,42 @@ daemonize = /var/log/uwsgi/yourproject.log # background the process & log
 
 
 
+## 后续
+
+Nginx + uWSGI + Django 的部署基本完成。自己编译安装，实际还是挺麻烦的。光整理这个过程都花了好长时间。
 
 
+## 相关内容
 
 
-
-
-
-
-------------------------------------------------
-
-
-
-
-
-
-
-
-
-sudo cp /etc/apt/sources.list /etc/apt/sources.list_bak #备份一下软件源
-sudo vi /etc/apt/sources.list
-
-加入如下内容即可
-
+### debing国内服务器镜像
 
 #### 网易163更新服务器：
 
->deb http://mirrors.163.com/debian/ squeeze main non-free contrib
+```
+deb http://mirrors.163.com/debian/ squeeze main non-free contrib
 deb http://mirrors.163.com/debian/ squeeze-proposed-updates main non-free contrib
 deb-src http://mirrors.163.com/debian/ squeeze main non-free contrib
 deb-src http://mirrors.163.com/debian/ squeeze-proposed-updates main non-free contrib
+```
 
 #### sohu 更新服务器：
->deb http://mirrors.sohu.com/debian/ lenny main non-free contrib
+
+```
+deb http://mirrors.sohu.com/debian/ lenny main non-free contrib
 deb http://mirrors.sohu.com/debian/ lenny-proposed-updates main non-free contrib
 deb-src http://mirrors.sohu.com/debian/ lenny main non-free contrib
 deb-src http://mirrors.sohu.com/debian/ lenny-proposed-updates main non-free contrib
-
-
-```
-open the setting file: /etc/apt/sources.list
-
-add the follow code:
-
-[plain] view plain copy 在CODE上查看代码片派生到我的代码片
-deb http://http.debian.net/debian wheezy main contrib non-free  
-deb http://mirrors.163.com/debian wheezy main contrib non-free   
-deb http://mirrors.ustc.edu.cn/debian wheezy main contrib non-free  
-  
->#testing package sources, emacs24 is in it.  
->#deb http://mirrors.163.com/debian testing main   
-
-'#' is for comment,
-every time you changed the file  /etc/apt/sources.list, you should run:
-
-[plain] view plain copy 在CODE上查看代码片派生到我的代码片
-sudo apt-get update  
-```
-
-[debian source list 地址更新说明]
-
-> http://www.cnblogs.com/beanmoon/p/3387652.html
-
-```
-deb http://mirrors.163.com/debian/ wheezy main non-free contrib
-deb http://mirrors.163.com/debian/ wheezy-proposed-updates main non-free contrib
-deb-src http://mirrors.163.com/debian/ wheezy main non-free contrib
-deb-src http://mirrors.163.com/debian/ wheezy-proposed-updates main non-free contrib
 ```
 
 
-## django 创建工程
+### 查找当前python版本的库目录
 
-
-安装 
-apt-get install python-django -y
-
-查找当前python版本的库目录
-python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
-
-映射django-admin 到 /usr/local/bin 目录
-ln -s /usr/lib/python2.7/dist-packages/django/bin/django-admin.py /usr/local/bin
-
-权限问题：
-chmod 777 /usr/lib/python2.7/dist-packages/django/bin/django-admin.py
-
-
-创建mysite 站点
-django-admin.py startproject mysite
-cd mysite
-
-同步
-python manage.py migrate
-
-运行站点
-python manage.py runserver 8002
-or
-python manage.py runserver 0.0.0.0:8002
-
-
-OK
-
-
-### uwsgi 安装
-
-apt-get install uwsgi -y
-
-
-创建测试文件
-Create a file called test.py:
-```
-# test.py
-def application(env, start_response):
-    start_response('200 OK', [('Content-Type','text/html')])
-    return [b"Hello World"] # python3
-    #return ["Hello World"] # python2
-```
- 
-
-2015.01.09 更新：
-
-在make时出现这个提示：
+python3 和 python2 改一下print
 
 ```
-# Substitution happens here, as the completely-expanded BINDIR
-# is not available in configure
-sed -e "s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m," < ./Misc/python-config.in >python-config.py
-# Replace makefile compat. variable references with shell script compat. ones; ->
-sed -e 's,\$(\([A-Za-z0-9_]*\)),\$\{\1\},g' < Misc/python-config.sh >python-config
-# On Darwin, always use the python version of the script, the shell
-# version doesn't use the compiler customizations that are provided
-# in python (_osx_support.py).
-if test `uname -s` = Darwin; then \
-cp python-config.py python-config; \
-fi
+$ python -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())"
 ```
-
-按提示操作：
-
-```
-$ sed -e "s,@EXENAME@,/opt/python-3.4.2/bin/python3.4m," < ./Misc/python-config.in >python-config.py
-$ sed -e 's,\$(\([A-Za-z0-9_]*\)),\$\{\1\},g' < Misc/python-config.sh >python-config
-```
-
-再make：
-
-$ make
-最后：
-
-> sudo make install
- 
-
-在编译安装python3.4.2时有这个提示：
-```
-INFO: Can't locate Tcl/Tk libs and/or headers
-
-Python build finished successfully!
-The necessary bits to build these optional modules were not found:
-_tkinter
-To find the necessary bits, look in setup.py in detect_modules() for the module's name.
-```
-
-解决办法：
-
-```
-sudo apt-get install python-tk tcl tk tcl-dev tk-dev 
-```
-
-
-
-## 安装python 3.5
-
-
-最近打算学习一下python，发现python3与2.X版本有比较大的出入，思量之下，还是决定学3。我的系统的Debian7，系统自带的python版本是2.7，所以需要手动安装3了。
-
-我要安装的具体版本是3.4.1，具体可以到其官网上获取：https://www.python.org/ftp/python/
-
-Debian 7 编译安装 Python3.4.1
-
-1、下载python3.4.1安装包
-
-> wget https://www.python.org/ftp/python/3.4.1/Python-3.4.1.tgz  
-tar -zxvf Python-3.4.1.tgz 
-cd Python-3.4.1 
-mkdir /usr/local/python35
-./configure –prefix=/usr/local/python35
-make
-make install
-
-
-
-7、此时已完成新版本的安装，但由于老版本还在系统中，所以需要将原来/usr/bin/python链接改为新的连接：
-先修改老的连接，执行
-再建立新连接
-
-> mv /usr/bin/python /usr/bin/python_bak
-> ln -s /usr/local/python3.4.1/bin/python3.4  /usr/bin/python 
-
-
-8、查询python版本，执行：
-
-> python 
-
-可以使用 “python -v”查看当前版本
-
 
 
 ### 权限说明
@@ -1113,26 +910,30 @@ chown -R abc /home/blog
                             同理第3行也是“读”打对号，。
 
 使用`ls -l` 查看明细信息时，可以看到如下信息。
->drwxr-xr-x 19 abc abc     4096 Feb 28 19:45 Python-3.5.1
+
+```
+drwxr-xr-x 19 abc abc     4096 Feb 28 19:45 Python-3.5.1
 -rw-r--r--  1 abc abc 20143759 Dec  7 09:47 Python-3.5.1.tgz.1
+```
 
 第一个标示为目录，后续的就是［用户］［群组］［其他］的权限，再后面就是 用户和群组的名称
 
-
-
-## 相关问题：
 
 ### 下载wget出现无效证书错误
 
 wget 下载时出现 Wget error: ERROR: The certificate of is not trusted. 
 解决方法：安装 ca-certificates 包
->$ sudo apt-get install ca-certificates
+```
+$ sudo apt-get install ca-certificates
+```
 
 2 使用 --no-check-certificate 参数下载
-># wget \-\-no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz
+```
+$ wget \-\-no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3.5.1.tgz
+```
 
 
-## sudo 命令没有权限
+### sudo 命令没有权限
 
 在  /etc/sudoers 文件中增加 用户权限
 
@@ -1140,36 +941,19 @@ wget 下载时出现 Wget error: ERROR: The certificate of is not trusted.
 
 相关文档：http://man.linuxde.net/sudo
 
-查看Python安装位置
------
-大家知道django是安装到python目录下的site-packages下的，但是这几个python目录下都没有site-packages这个文件夹，其实我们可以先通过下面的命令定位一下：
 
-python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
-
-python3 -c "from distutils.sysconfig import get_python_lib; print (get_python_lib())"
-
-sudo ln -s /opt/python-3.5.1/bin/python3.5 /usr/bin/python
-sudo ln -s /opt/python-3.5.1/bin/pip3 /usr/bin/pip
+### vim 设置
 
 
-## vim 设置
-
-**语法高亮 **
-> syntax on
+**语法高亮 ** 
+syntax on
 
 ** 制表符为4 **
-> set tabstop=4 
+set tabstop=4
 
 ** 统一缩进为4 **
-> set softtabstop=4 
-> set shiftwidth=4 
-
-
-```
-http://uwsgi-docs.readthedocs.org/en/latest/tutorials/Django_and_nginx.html
-```
-
-## 用户权限分配
+set softtabstop=4
+set shiftwidth=4
 
 
 ### pip install 版本问题
@@ -1183,122 +967,18 @@ You should consider upgrading via the 'pip install --upgrade pip' command.
 
 需要升级pip版本
 
-```pip install --upgrade pip```
-
-
-### 测试图片地址
-
-> http://pngimg.com/upload/butterfly_PNG1029.png
-
 ```
-mkdir media
-cd media 
-wget http://pngimg.com/upload/butterfly_PNG1029.png
-mv butterfly_PNG1029.png media.png
+$ sudo pip install --upgrade pip
 ```
 
 
-http://img2.3lian.com/img2007/14/03/20080405141042587.png
+### 安装Django指定版本
 
-/var/run/mysite_nginx.sock
-
-uwsgi --socket /var/run/mysite_nginx.sock --wsgi-file test.py
-
+如安装 1.8 版本的
 
 ```
-# mysite_uwsgi.ini file
-[uwsgi]
-
-# Django-related settings
-# the base directory (full path)
-chdir           = /home/abc/uwsgi/mysite
-# Django's wsgi file
-module          = mysite.wsgi
-# the virtualenv (full path)
-home            = /home/abc/uwsgi
-
-# process-related settings
-# master
-master          = true
-# maximum number of worker processes
-processes       = 10
-# the socket (use the full path to be safe
-socket          = /home/abc/uwsgi/mysite/mysite.sock
-# ... with appropriate permissions - may be needed
-chmod-socket    = 666
-# clear environment on exit
-vacuum          = true
-
+$ sudo pip install Django==1.8
 ```
-
-# create a directory for the vassals
-sudo mkdir /etc/uwsgi
-sudo mkdir /etc/uwsgi/vassals
-# symlink from the default config directory to your config file
-sudo ln -s /home/abc/uwsgi/mysite/mysite_uwsgi.ini /etc/uwsgi/vassals/
-# run the emperor
-uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
-
-
- /usr/local/python35/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi-emperor.log
-
-
-
- "
- /home/abc/www/bin/python3.5 -u -c "import setuptools, tokenize;__file__='/tmp/pip-build-d66t2tqy/Pillow/setup.py';exec(compile(getattr(tokenize, 'open', open)(__file__).read().replace('\r\n', '\n'), __file__, 'exec'))" install       --record /tmp/pip-d4liuly_-record/install-record.txt --single-version-externally-managed --compile --install-headers /      home/abc/www/include/site/python3.5/Pillow" failed with error code 1 in /tmp/pip-build-d66t2tqy/Pillow
-
-
-### Pillow安装问题
-
-pip install Pillow
-
-目测你需要安装 python-dev用来编译一些 c 写的 python 库
-
-pil 或者 pillow 想要正常工作，可能还需要 libjpeg-dev libpng-dev等依赖库
-
-先安装依赖库，再重新安装 pillow 库。如果在线 pip 不能安装，可以使用离线的方式安装，下载pillow
-源码，然后用 pip 安装 :pip install pillow--2.3.tar.gz
-
-
-## nginx 安装包
-
-###Installation
-
-```
-wget  https://github.com/centos-bz/ezhttp/archive/master.zip?time=$(date +%s) -O ezhttp.zip
-unzip ezhttp.zip
-cd ezhttp-master
-chmod +x start.sh
-./start.sh
-```
-
-
-### 安装打印结果信息
-
-```
-..
-/usr/local/mysql/bin/mysqladmin: connect to server at 'localhost' failed
-error: 'Access denied for user 'root'@'localhost' (using password: NO)'
-Active Internet connections (only servers)
-Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      14212/mysqld
-tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      14020/nginx.conf
-tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2143/sshd
-tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      2170/exim4
-tcp6       0      0 :::22                   :::*                    LISTEN      2143/sshd
-tcp6       0      0 ::1:25                  :::*                    LISTEN      2170/exim4
-Active UNIX domain sockets (only servers)
-Proto RefCnt Flags       Type       State         I-Node   PID/Program name    Path
-unix  2      [ ACC ]     STREAM     LISTENING     5120     1830/acpid          /var/run/acpid.socket
-unix  2      [ ACC ]     SEQPACKET  LISTENING     3108     304/udevd           /run/udev/control
-unix  2      [ ACC ]     STREAM     LISTENING     40758    14212/mysqld        /usr/local/mysql/data/mysql.sock
-```
-
-
-
-### Django 1.8 install
-
-pip install Django==1.8
 
 
 
