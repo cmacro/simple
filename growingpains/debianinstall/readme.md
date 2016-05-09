@@ -837,13 +837,10 @@ uwsgi --ini mysite_uwsgi.ini
 
 
 
-
-
-
-
 ## 后续
 
 Nginx + uWSGI + Django 的部署基本完成。自己编译安装，实际还是挺麻烦的。光整理这个过程都花了好长时间。
+
 
 
 ## 相关内容
@@ -883,7 +880,9 @@ $ python -c "from distutils.sysconfig import get_python_lib; print (get_python_l
 
 chown 
 // 所有者改成abc用户
-chown -R abc /home/blog  
+```
+$ sudo chown -R abc /home/blog  
+```
 
 一些常用的权限问题，如 444 644  666 754 777，
 
@@ -917,6 +916,14 @@ drwxr-xr-x 19 abc abc     4096 Feb 28 19:45 Python-3.5.1
 ```
 
 第一个标示为目录，后续的就是［用户］［群组］［其他］的权限，再后面就是 用户和群组的名称
+
+
+还种方法使用字符方式rwx这样更容易理解。
+
+```
+$ sudo chmod a+rwx -R logs   # 给所有用户赋权限（个人学习，不考虑安全问题）
+```
+
 
 
 ### 下载wget出现无效证书错误
@@ -980,55 +987,3 @@ $ sudo pip install --upgrade pip
 $ sudo pip install Django==1.8
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-注意红色加粗部分，需要将路径改为自己机器的相应路径。
-接着，设置文件的访问权限：
-chmod a+x /etc/init.d/nginx                                                         (a+x参数表示 ==> all user can execute  所有用户可执行)
-
-chmod +x /etc/init.d/nginx
-
-
-最后将ngix加入到rc.local文件中，这样开机的时候nginx就默认启动了
-vim /etc/rc.local
-添加
-/etc/init.d/nginx start   
-保存并退出
-下次重启就会生效，实现nginx的自启动。
-
-
-
-
-
---------------
-
-sudo chmod a+rwx -R logs   
-sudo chmod a+rwx -R /usr/local/nginx 
-
-nginx: [alert] could not open error log file: open() "/usr/local/nginx/logs/error.log" failed (13:Permission denied)
-2014/08/04 20:35:45 [emerg] 17114#0: open() "/usr/local/nginx/logs/access.log" failed (13: Permission denied)
-原因：当前用户对该位置没有写入权限
-解决办法：
-1.使用命令：sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf 以root权限启动
-2.使用命令：sudo chmod -R a+rw /usr/local/nginx 给所有用户赋权限（个人学习，不考虑安全问题）
-                    /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf  启动Nginx
-
-注：以非root权限启动时，会出现 nginx: [emerg] bind() to 0.0.0.0:80 failed (13: Permission denied) 错误
-原因：Linux只有root用户可以使用1024一下的端口
-解决办法：1.已root权限启动
-  2.将 /usr/local/nginx/conf/nginx.conf 文件中的80端口改为1024以上
-server {
-# listen 80
-   listen 8080
-……
-}
