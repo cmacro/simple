@@ -527,13 +527,13 @@ $ cd mysite
 ### uWSGI安装配置
 
 
-安装uwsgi
+#### 安装uwsgi
 
 ```
 $ pip install uwsgi
 ```
 
-创建一个测试文件 test.py
+#### 创建一个测试文件 test.py
 
 ```
 # test.py
@@ -544,87 +544,89 @@ def application(env, start_response):
 ```
 
 
-
-
-
-#### About the domain and port
-In this tutorial we will call your domain example.com. Substitute your own FQDN or IP address.
-
-Throughout, we’ll be using port 8000 for the web server to publish on, just like the Django runserver does by default. You can use whatever port you want of course, but I have chosen this one so it doesn’t conflict with anything a web server might be doing already.
-
-### Basic uWSGI installation and configuration
-
-#### Install uWSGI into your virtualenv
-
-```pip install uwsgi```
-
-Of course there are other ways to install uWSGI, but this one is as good as any. Remember that you will need to have Python development packages installed. In the case of Debian, or Debian-derived systems such as Ubuntu, what you need to have installed is `pythonX.Y-dev`, where X.Y is your version of Python.
-
-#### Basic test
-Create a file called test.py:
+#### 运行uWSGI
 
 ```
-$ cat >test.py
+$ uwsgi --http :8000 --wsgi-file test.py
 ```
 
-```
-# test.py
-def application(env, start_response):
-    start_response('200 OK', [('Content-Type','text/html')])
-    return [b"Hello World"] # python3
-    #return ["Hello World"] # python2
+> **选项：**  
+> http:8000  使用8000端口访问  
+> wsgi-file test.py 加载刚新建的测试文件test.py
+
+在浏览器中测试，正常应该可以在浏览器中看到 `hello world`。
+
+```http://192.168.10.14:8000```
+
+
+这样，uWSGI就调通了。可以继续下一步Django工程的测试
+
+> **处理流程：**  
+> 客户端 <-> uWSGI <-> python  
+
+
+#### Django工程测试
+
+刚才已经新建了一个mysite的Django工程，可以直接运行这个站点。前面的方法是运行单个python文件的方法，运行站点的方法稍微有些不同。
+
+先测试一下mysite，确保没问题
 
 ```
+$ python manage.py migrate      
+$ python manage.py runserver 0.0.0.0:8000
+
+```
+
+在浏览器上就能看到下面内容，就说明OK了
+
+```
+It worked!
+Congratulations on your first Django-powered page.
+...
+```
+
+使用uWSGI运行站点。
+
+```uwsgi --http :8000 --module mysite.wsgi```
 
 
-#### Run uWSGI:
-
-```uwsgi --http :8000 --wsgi-file test.py```
-
-The options mean:
-
-* http :8000: use protocol http, port 8000
-* wsgi-file test.py: load the specified file, test.py
-
-This should serve a ‘hello world’ message directly to the browser on port 8000. Visit:
-
-```http://example.com:8000```
-
-to check. If so, it means the following stack of components works:
-
-> the web client <-> uWSGI <-> Python
+> **访问流程：**  
+> client <-> uWSGI <-> Django  
 
 
-#### Test your Django project
+### nginx基础
 
-Now we want uWSGI to do the same thing, but to run a Django site instead of the `test.py` module.
+#### 使用Nginx配置站点
 
-If you haven’t already done so, make sure that your `mysite` project actually works:
+正常访问uwsgi需要一个`uwsgi_params`的文件，在编译安装的目录中有这个文件，可以直接使用。如果没有可以从 https://github.com/nginx/nginx/blob/master/conf/uwsgi_params 获取
 
-```python manage.py runserver 0.0.0.0:8000```
+把这个文件复制到mysite工程目录中。
 
-And if it that works, run it using uWSGI:
+```
+$ cp /usr/local/nginx/conf/uwsgi_params ./
+```
 
-> uwsgi --http :8000 --module mysite.wsgi
+增加2个目录`media`和`static`, Django会使用到。
 
-* module mysite.wsgi: load the specified wsgi module
-
-Point your browser at the server; if the site appears, it means uWSGI is able to serve your Django application from your virtualenv, and this stack operates correctly:
-
-> the web client <-> uWSGI <-> Django
-
-Now normally we won’t have the browser speaking directly to uWSGI. That’s a job for the webserver, which will act as a go-between.
+```
+$ mkdir media
+$ mkdir static
+```
 
 
-### Basic nginx
+创建一个站点配置文件 `mysite_nginx.conf`
 
-#### 使用Nginx配置你的站点
+> **注意：**   
+> /home/abc/uwsgi-tutorial/mysite   
+> 这个工程目录如有不同，需要修改一下。可以使用`pwd`查看你当前的目录   
+>
 
-You will need the `uwsgi_params` file, which is available in the `nginx` directory of the uWSGI distribution, or from https://github.com/nginx/nginx/blob/master/conf/uwsgi_params
 
-Copy it into your project directory. In a moment we will tell nginx to refer to it.
+```
+$ cat >mysite_nginx.conf
+```
 
-Now create a file called `mysite_nginx.conf`, and put this in it:
+添加下面内容
 
 ```
 # mysite_nginx.conf
@@ -663,35 +665,226 @@ server {
 }
 ```
 
-This conf file tells nginx to serve up media and static files from the filesystem, as well as handle requests that require Django’s intervention. For a large deployment it is considered good practice to let one server handle static/media files, and another handle Django applications, but for now, this will do just fine.
+把配置文件映射到nginx的站点配置启动目录`sites-enabled`中。先前nginx配置时增加的那个目录。
 
-sites-enabled 是网站配置目录。正常情况设置在nginx.conf 中有配置
-http 配置块中会包含站点配置目录
 
-如 
+配置文件映射到 ```/etc/nginx/sites-enabled/```
+
 ```
-include vhost/*.conf;
-include /etc/nginx/sites-enabled/*
+$ sudo ln -s /home/abc/uwsgi-tutorial/mysite/mysite_nginx.conf /etc/nginx/sites-enabled/
 ```
 
 
-具体 sites-enabled 在什么地方
-
-Symlink to this file from `/etc/nginx/sites-enabled` so nginx can see it:
-
-> sudo ln -s /home/abc/uwsgi-tutorial/mysite/mysite_nginx.conf /usr/local/nginx/conf/vhost/
-
-
-
-
-### Basic nginx test
-
-Restart nginx:
+重启nginx服务
 
 ```
 sudo /etc/init.d/nginx restart
 ```
 
+#### 部署静态文件
+
+在启动nginx之前，需要把Django的静态文件生成到`static`静态目录中。需要改一下`mysite/settings.py`的配置，在最后增加一行。
+
+```
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+```
+
+```
+python manage.py collectstatic
+```
+
+
+#### 测试nginx
+
+重启nginx
+
+```
+$ sudo /etc/init.d/nginx restart
+```
+
+
+
+To check that media files are being served correctly, add an image called media.png to the /path/to/your/project/project/media directory, then visit http://example.com:8000/media/media.png - if this works, you’ll know at least that nginx is serving files correctly.
+
+It is worth not just restarting nginx, but actually stopping and then starting it again, which will inform you if there is a problem, and where it is.
+
+nginx and uWSGI and test.py
+Let’s get nginx to speak to the “hello world” test.py application.
+
+uwsgi --socket :8001 --wsgi-file test.py
+This is nearly the same as before, except this time one of the options is different:
+
+socket :8001: use protocol uwsgi, port 8001
+nginx meanwhile has been configured to communicate with uWSGI on that port, and with the outside world on port 8000. Visit:
+
+http://example.com:8000/
+
+to check. And this is our stack:
+
+the web client <-> the web server <-> the socket <-> uWSGI <-> Python
+Meanwhile, you can try to have a look at the uswgi output at http://example.com:8001 - but quite probably, it won’t work because your browser speaks http, not uWSGI, though you should see output from uWSGI in your terminal.
+
+Using Unix sockets instead of ports
+So far we have used a TCP port socket, because it’s simpler, but in fact it’s better to use Unix sockets than ports - there’s less overhead.
+
+Edit mysite_nginx.conf, changing it to match:
+
+server unix:///path/to/your/mysite/mysite.sock; # for a file socket
+# server 127.0.0.1:8001; # for a web port socket (we'll use this first)
+and restart nginx.
+
+Run uWSGI again:
+
+uwsgi --socket mysite.sock --wsgi-file test.py
+This time the socket option tells uWSGI which file to use.
+
+Try http://example.com:8000/ in the browser.
+
+If that doesn’t work
+Check your nginx error log(/var/log/nginx/error.log). If you see something like:
+
+connect() to unix:///path/to/your/mysite/mysite.sock failed (13: Permission
+denied)
+then probably you need to manage the permissions on the socket so that nginx is allowed to use it.
+
+Try:
+
+uwsgi --socket mysite.sock --wsgi-file test.py --chmod-socket=666 # (very permissive)
+or:
+
+uwsgi --socket mysite.sock --wsgi-file test.py --chmod-socket=664 # (more sensible)
+You may also have to add your user to nginx’s group (which is probably www-data), or vice-versa, so that nginx can read and write to your socket properly.
+
+It’s worth keeping the output of the nginx log running in a terminal window so you can easily refer to it while troubleshooting.
+
+Running the Django application with uwsgi and nginx
+Let’s run our Django application:
+
+uwsgi --socket mysite.sock --module mysite.wsgi --chmod-socket=664
+Now uWSGI and nginx should be serving up not just a “Hello World” module, but your Django project.
+
+Configuring uWSGI to run with a .ini file
+We can put the same options that we used with uWSGI into a file, and then ask uWSGI to run with that file. It makes it easier to manage configurations.
+
+Create a file called `mysite_uwsgi.ini`:
+
+# mysite_uwsgi.ini file
+[uwsgi]
+
+# Django-related settings
+# the base directory (full path)
+chdir           = /path/to/your/project
+# Django's wsgi file
+module          = project.wsgi
+# the virtualenv (full path)
+home            = /path/to/virtualenv
+
+# process-related settings
+# master
+master          = true
+# maximum number of worker processes
+processes       = 10
+# the socket (use the full path to be safe
+socket          = /path/to/your/project/mysite.sock
+# ... with appropriate permissions - may be needed
+# chmod-socket    = 664
+# clear environment on exit
+vacuum          = true
+And run uswgi using this file:
+
+uwsgi --ini mysite_uwsgi.ini # the --ini option is used to specify a file
+Once again, test that the Django site works as expected.
+
+Install uWSGI system-wide
+So far, uWSGI is only installed in our virtualenv; we’ll need it installed system-wide for deployment purposes.
+
+Deactivate your virtualenv:
+
+deactivate
+and install uWSGI system-wide:
+
+sudo pip install uwsgi
+
+# Or install LTS (long term support).
+pip install http://projects.unbit.it/downloads/uwsgi-lts.tar.gz
+The uWSGI wiki describes several installation procedures. Before installing uWSGI system-wide, it’s worth considering which version to choose and the most apppropriate way of installing it.
+
+Check again that you can still run uWSGI just like you did before:
+
+uwsgi --ini mysite_uwsgi.ini # the --ini option is used to specify a file
+Emperor mode
+uWSGI can run in ‘emperor’ mode. In this mode it keeps an eye on a directory of uWSGI config files, and will spawn instances (‘vassals’) for each one it finds.
+
+Whenever a config file is amended, the emperor will automatically restart the vassal.
+
+# create a directory for the vassals
+sudo mkdir /etc/uwsgi
+sudo mkdir /etc/uwsgi/vassals
+# symlink from the default config directory to your config file
+sudo ln -s /path/to/your/mysite/mysite_uwsgi.ini /etc/uwsgi/vassals/
+# run the emperor
+uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
+You may need to run uWSGI with sudo:
+
+sudo uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data
+The options mean:
+
+emperor: where to look for vassals (config files)
+uid: the user id of the process once it’s started
+gid: the group id of the process once it’s started
+Check the site; it should be running.
+
+Make uWSGI startup when the system boots
+The last step is to make it all happen automatically at system startup time.
+
+For many systems, the easiest (if not the best) way to do this is to use the rc.local file.
+
+Edit /etc/rc.local and add:
+
+/usr/local/bin/uwsgi --emperor /etc/uwsgi/vassals --uid www-data --gid www-data --daemonize /var/log/uwsgi-emperor.log
+before the line “exit 0”.
+
+And that should be it!
+
+Further configuration
+It is important to understand that this has been a tutorial, to get you started. You do need to read the nginx and uWSGI documentation, and study the options available before deployment in a production environment.
+
+Both nginx and uWSGI benefit from friendly communities, who are able to offer invaluable advice about configuration and usage.
+
+nginx
+General configuration of nginx is not within the scope of this tutorial though you’ll probably want it to listen on port 80, not 8000, for a production website.
+
+You should also configure a separate nginx location block for serving non-Django files. For example, it’s inefficient to serve static files via uWSGI. Instead, serve them directly from Nginx and completely bypass uWSGI.
+
+uWSGI
+uWSGI supports multiple ways to configure it. See uWSGI’s documentation and examples.
+
+Some uWSGI options have been mentioned in this tutorial; others you ought to look at for a deployment in production include (listed here with example settings):
+
+env = DJANGO_SETTINGS_MODULE=mysite.settings # set an environment variable
+safe-pidfile = /tmp/project-master.pid # create a pidfile
+harakiri = 20 # respawn processes taking more than 20 seconds
+limit-as = 128 # limit the project to 128 MB
+max-requests = 5000 # respawn processes after serving 5000 requests
+daemonize = /var/log/uwsgi/yourproject.log # background the process & log
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------
 
 
 
