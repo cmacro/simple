@@ -78,7 +78,9 @@ apt-get install ca-certificates
 
 
 
-## 部署 NGINX
+## 编译部署NGINX
+
+刚写完这篇文章就出了[nginx-1.10.0](http://nginx.org/)的稳定版本。小伙伴们可以升级了。
 
 编译nginx依赖以下模块：
 
@@ -173,14 +175,22 @@ $ sudo make install
 
 > **注意：** 这里编译的时候不能用相对路径。
 
-若安装时找不到上述依赖模块，使用--with-openssl=<openssl_dir>、--with-pcre=<pcre_dir>、--with-zlib=<zlib_dir>指定依赖的模块目录。如已安装过，此处的路径为安装目录；若未安装，则此路径为编译安装包路径，nginx将执行模块的默认编译安装。
+若安装时找不到上述依赖模块，使用
+```
+--with-openssl=<openssl_dir>
+--with-pcre=<pcre_dir>
+--with-zlib=<zlib_dir>
+```
+指定依赖的模块目录。如已安装过，此处的路径为安装目录；若未安装，则此路径为编译安装包路径，nginx将执行模块的默认编译安装。
 
 
-### 增加配置
+### 增加站点启动配置
 
-在nginx.conf中增加包含配置路径。
+在nginx.conf中增加包含配置路径，这样每次启动nginx自动会加载目录中的所有配置。
 
+这个方法是方便，再一个服务器上部署多站点点时相当方便。
 
+由于是编译安装，全新的服务器是没有相应的目录，需要自己创建。
 ```
 $ sudo mkdir /etc/nginx
 $ sudo mkdir /etc/nginx/sites-enabled
@@ -196,9 +206,9 @@ include /etc/nginx/sites-enabled/*;
 ```
 
 
-> ** 说明：**   
+> **说明：**   
 > 为什么把路径设置到 /etc/nginx/sites-enabled。  
-> 是一般习惯的做法，当然也可以放在其他地方。为维护方便减少记忆使用标准的会比较好。  
+> 是一般习惯的做法，使用apt-get 包安装方法就会放在这个地府。当然也可以放在其他地方，为维护方便减少记忆使用标准的会比较容易找。  
 
 
 
@@ -213,14 +223,12 @@ $ sudo /usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf
 
 启动nginx之后，浏览器中输入http://192.168.10.14 可以验证是否安装启动成功。看到欢迎页面那就恭喜你OK了。
 
-上面还有个问题，每次启动系统或维护打这么一长串命令不方便。因此还是要和安装包那种一样，启动系统直接启动和怎加维护命令。
+上面还有个问题，每次启动系统或维护打这么一长串命令不方便。因此还是要和安装包那种一样，启动系统直接启动和增加维护命令。
 
 自己编译安装的在启动目录/etc/init.d 中是没有nginx的启动文件，需要自己添加一个文件。创建一个启动文件，把下面的启动代码复制进去。
 
 
 > **注意：**  安装路径 nginx_location=/usr/local/nginx
-
-
 
 ```
 #! /bin/bash
@@ -252,66 +260,66 @@ set -e
 [ -x "$DAEMON" ] || exit 0
 
 acqNginxPid(){
-  local pid
-  if [ -f $PIDFILE ] ; then
-  	 pid=`cat $PIDFILE`
-  	 echo ${pid}
-  fi 	 
+    local pid
+    if [ -f $PIDFILE ] ; then
+        pid=`cat $PIDFILE`
+        echo ${pid}
+    fi
 }
 
 do_start() {
- local pid=`acqNginxPid`
- if [[ ".${pid}" == "." ]] ; then
-    $DAEMON -c $CONFIGFILE 
- else
-    echo -n "nginx already running"
- fi
+    local pid=`acqNginxPid`
+    if [[ ".${pid}" == "." ]] ; then
+       $DAEMON -c $CONFIGFILE 
+    else
+       echo -n "nginx already running"
+    fi
 }
 
 do_stop() {
- local pid=`acqNginxPid`
- if [ ".${pid}" != "." ] ; then
-    kill -INT ${pid}
- else
-    echo -n "nginx not running"
- fi
+    local pid=`acqNginxPid`
+    if [ ".${pid}" != "." ] ; then
+        kill -INT ${pid}
+    else
+        echo -n "nginx not running"
+    fi
 }
 
 do_reload() {
- local pid=`acqNginxPid`
- if [ ".${pid}" != "." ] ; then
-    kill -HUP ${pid}
- else
-    echo -n "nginx can't reload"
- fi
+    local pid=`acqNginxPid`
+    if [ ".${pid}" != "." ] ; then
+        kill -HUP ${pid}
+    else
+        echo -n "nginx can't reload"
+    fi
 }
 
 case "$1" in
- start)
- echo -n "Starting $DESC: $NAME"
- do_start
- echo "."
- ;;
- stop)
- echo -n "Stopping $DESC: $NAME"
- do_stop
- echo "."
- ;;
- reload|graceful)
- echo -n "Reloading $DESC configuration..."
- do_reload
- echo "."
- ;;
- restart)
- echo -n "Restarting $DESC: $NAME"
- do_stop
- do_start
- echo "."
- ;;
- *)
- echo "Usage: $SCRIPTNAME {start|stop|reload|restart}" >&2
- exit 3
- ;;
+    start)
+        echo -n "Starting $DESC: $NAME"
+        do_start
+        echo "."
+        ;;
+    stop)
+        echo -n "Stopping $DESC: $NAME"
+        do_stop
+        echo "."
+        ;;
+    reload|graceful)
+        echo -n "Reloading $DESC configuration..."
+        do_reload
+        echo "."
+        ;;
+    restart)
+        echo -n "Restarting $DESC: $NAME"
+        do_stop
+        do_start
+        echo "."
+        ;;
+    *)
+    echo "Usage: $SCRIPTNAME {start|stop|reload|restart}" >&2
+    exit 3
+    ;;
 esac
 
 exit 0
@@ -843,7 +851,9 @@ Nginx + uWSGI + Django 的部署基本完成。自己编译安装，实际还是
 
 
 
-## 相关内容
+> **相关内容：**  
+> 授权命令chown可以参考[**linux权限命令chown**](http://www.moguf.com/post/linuxcmdchown)  说明
+> 
 
 
 ### debing国内服务器镜像
@@ -876,60 +886,11 @@ $ python -c "from distutils.sysconfig import get_python_lib; print (get_python_l
 ```
 
 
-### 权限说明
-
-chown 
-// 所有者改成abc用户
-```
-$ sudo chown -R abc /home/blog  
-```
-
-一些常用的权限问题，如 444 644  666 754 777，
-
-读r=4
-写w=2
-执行x=1
-
-总共用三个数字代表三个组的权限，每个数字的大小等于每个组所包含的三个权限的数字之和。
-
-例如：一个文件的权限为rw-rwx-r-x，它的数字表示方法就是675
-也就是［用户］读写
-     ［群组］读写执行
-     ［其它］读执行
-
-常用的权限组合：
-          444＝r--r--r--
-          644=rw-r--r--
-          666=rw-rw-rw
-          754=rwxr-xr--
-          777=rwxrwxrwx
-
-所以 644的意思，第一个6肯定是4+2的，说以有“读”跟“写”的意思，  所以在第一行 在“读”和“写”上打对号
-                            4肯定就是4,就是读，所以在第2行 ，“读”上打对号，（没有“写”跟“执行”的权限）
-                            同理第3行也是“读”打对号，。
-
-使用`ls -l` 查看明细信息时，可以看到如下信息。
-
-```
-drwxr-xr-x 19 abc abc     4096 Feb 28 19:45 Python-3.5.1
--rw-r--r--  1 abc abc 20143759 Dec  7 09:47 Python-3.5.1.tgz.1
-```
-
-第一个标示为目录，后续的就是［用户］［群组］［其他］的权限，再后面就是 用户和群组的名称
-
-
-还种方法使用字符方式rwx这样更容易理解。
-
-```
-$ sudo chmod a+rwx -R logs   # 给所有用户赋权限（个人学习，不考虑安全问题）
-```
-
-
 
 ### 下载wget出现无效证书错误
 
 wget 下载时出现 Wget error: ERROR: The certificate of is not trusted. 
-解决方法：安装 ca-certificates 包
+**解决方法：**安装 `ca-certificates` 包
 ```
 $ sudo apt-get install ca-certificates
 ```
@@ -944,23 +905,21 @@ $ wget \-\-no-check-certificate https://www.python.org/ftp/python/3.5.1/Python-3
 
 在  /etc/sudoers 文件中增加 用户权限
 
->abc ALL=(ALL:ALL) ALL
-
-相关文档：http://man.linuxde.net/sudo
+```
+abc ALL=(ALL:ALL) ALL
+```
 
 
 ### vim 设置
 
 
-**语法高亮 ** 
-syntax on
+说明 | 语法
+---| ---
+语法高亮 | syntax on
+制表符为4 | set tabstop=4
+统一缩进为4 | set softtabstop=4
+自动缩进 | set shiftwidth=4
 
-** 制表符为4 **
-set tabstop=4
-
-** 统一缩进为4 **
-set softtabstop=4
-set shiftwidth=4
 
 
 ### pip install 版本问题
