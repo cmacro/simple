@@ -365,7 +365,6 @@ Debian7自带的[python](https://www.python.org)是2.7.3, 附带安装包中并�
 ```
 $ python --version     #查看当前python使用的版本
 
-
 $ sudo apt-get update 
 $ dpkg -l python*      # 可以看到所有python包，（没有最新的包）
 
@@ -508,6 +507,8 @@ index-url=https://pypi.douban.com/simple
 ```
 
 > **注：** 如果上面提示URL错误，把**https**改成**http**试一下。
+
+
 
 ## 安装uWSGI
 
@@ -676,7 +677,7 @@ server {
 把配置文件映射到nginx的站点配置启动目录`sites-enabled`中。先前nginx配置时增加的那个目录。
 
 
-配置文件映射到 ```/etc/nginx/sites-enabled/```
+配置文件映射到 `/etc/nginx/sites-enabled/`
 
 ```
 $ sudo ln -s /home/abc/uwsgi-tutorial/mysite/mysite_nginx.conf /etc/nginx/sites-enabled/
@@ -712,16 +713,13 @@ $ sudo /etc/init.d/nginx restart
 
 在media目录中增加一个media.png文件，测试一下nginx是否正常工作。
 
-http://192.168.10.14:8000/media/5.png
+http://192.168.10.14:8000/media/media.png
 
 
 > **提示：**可以从网上下载一个png文件复制到目录中，用wget下载。
+> `$ wget http://www.moguf.com/moguf.png`
 
-```
-wget https://raw.githubusercontent.com/cmacro/simple/master/other/2.png
-```
-
-如果没看到图片，可能会有一下情况。
+没看到图片，可能会有一下情况。
 
 > **问题排查：**  
 > 1、重启Nginx  
