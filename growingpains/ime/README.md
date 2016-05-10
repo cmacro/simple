@@ -37,3 +37,9 @@
 
 ## akeleditimetest
 使用AkelEdit控件测试输入法
+
+
+
+# 输入法开发资料
+
+http://www.cnblogs.com/freedomshe/archive/2012/11/30/ime_learning.html
