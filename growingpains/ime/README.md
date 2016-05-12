@@ -42,4 +42,6 @@
 
 # 输入法开发资料
 
+入口函数 ImeToAsciiEx
+
 http://www.cnblogs.com/freedomshe/archive/2012/11/30/ime_learning.html
