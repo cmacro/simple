@@ -568,4 +568,4 @@ It's c, hello python
 
 
 [devs]: http://www.moguf.com/category/devs
-[python]: http://www.moguf.com/category/python</string.h></python.h></module></stdin></dir></dir></string.h></python.h></python.h>
+[python]: http://www.moguf.com/category/python
